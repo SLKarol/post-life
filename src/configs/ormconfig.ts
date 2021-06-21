@@ -7,10 +7,11 @@ export const getOrmConfig = async (
   configService: ConfigService,
 ): Promise<TypeOrmModuleOptions> => {
   return {
-    host: configService.get('ORM_HOST'),
-    username: configService.get('ORM_LOGIN'),
-    password: configService.get('ORM_PASSWORD'),
-    database: configService.get('ORM_DATABASE'),
+    // host: configService.get('ORM_HOST'),
+    // username: configService.get('ORM_LOGIN'),
+    // password: configService.get('ORM_PASSWORD'),
+    // database: configService.get('ORM_DATABASE'),
+    url: configService.get('DATABASE_URL'),
     type: 'postgres',
     port: 5432,
     entities: [join(__dirname, '/../**/**.entity{.ts,.js}')],
