@@ -10,7 +10,6 @@ export class UserController {
     const users = await this.userService.findAll();
     return {
       users: users.map((user) => user.username),
-      i: 3,
     };
   }
 }
