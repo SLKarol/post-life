@@ -19,6 +19,12 @@ export const getOrmConfig = async (
     cli: {
       migrationsDir: 'src/migrations',
     },
+    ssl: true,
+    extra: {
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    },
   };
 };
 
@@ -33,6 +39,12 @@ const config: ConnectionOptions = {
   migrations: [join(__dirname, '/../migrations/**/*{.ts,.js}')],
   cli: {
     migrationsDir: 'src/migrations',
+  },
+  ssl: true,
+  extra: {
+    ssl: {
+      rejectUnauthorized: false,
+    },
   },
 };
 
