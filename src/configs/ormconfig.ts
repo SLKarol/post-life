@@ -30,12 +30,8 @@ export const getOrmConfig = async (
 };
 
 const config: ConnectionOptions = {
-  // username: process.env.ORM_LOGIN,
-  // password: process.env.ORM_PASSWORD,
-  // database: process.env.ORM_DATABASE,
   url: process.env.DATABASE_URL,
   type: 'postgres',
-  port: 5432,
   entities: [join(__dirname, '/../**/**.entity{.ts,.js}')],
   synchronize: false,
   migrations: [join(__dirname, '/../migrations/**/*{.ts,.js}')],
