@@ -6,10 +6,11 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  async findAll(): Promise<{ users: string[] }> {
+  async findAll() {
     const users = await this.userService.findAll();
     return {
       users: users.map((user) => user.username),
+      i: 3,
     };
   }
 }
