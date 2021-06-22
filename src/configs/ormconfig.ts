@@ -6,12 +6,10 @@ import { ConnectionOptions } from 'typeorm';
 export const getOrmConfig = async (
   configService: ConfigService,
 ): Promise<TypeOrmModuleOptions> => {
+  const url = configService.get('DATABASE_URL');
+  const isNotLocalhost = url.indexOf('@localhost') === -1;
   return {
-    // host: configService.get('ORM_HOST'),
-    // username: configService.get('ORM_LOGIN'),
-    // password: configService.get('ORM_PASSWORD'),
-    // database: configService.get('ORM_DATABASE'),
-    url: configService.get('DATABASE_URL'),
+    url,
     type: 'postgres',
     port: 5432,
     entities: [join(__dirname, '/../**/**.entity{.ts,.js}')],
@@ -20,8 +18,8 @@ export const getOrmConfig = async (
     cli: {
       migrationsDir: 'src/migrations',
     },
-    ssl: true,
-    extra: {
+    ssl: isNotLocalhost ? true : undefined,
+    extra: isNotLocalhost && {
       ssl: {
         rejectUnauthorized: false,
       },
