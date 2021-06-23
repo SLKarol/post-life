@@ -18,6 +18,7 @@ import { LoginUserDto, MainLoginDto } from './dto/loginUser.dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { User } from './decorators/user.decorator';
 import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
+import { MainUpdateUserDto, UpdateUserDto } from './dto/updateUser.dto';
 
 @Controller('users')
 export class UserController {
@@ -63,5 +64,26 @@ export class UserController {
   async currentUser(@User('id') currentUserId: string) {
     const user = await this.userService.findUserById(currentUserId);
     return user;
+  }
+
+  @Put('user')
+  @UsePipes(new BackendValidationPipe())
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: MainUpdateUserDto })
+  @ApiResponse({
+    description: 'Обновлённый пользователь',
+    status: 200,
+    type: ResponseUserDto,
+  })
+  @ApiBearerAuth()
+  async updateCurrentUser(
+    @User('id') currentUserId: string,
+    @Body('user') updateUserDto: UpdateUserDto,
+  ): Promise<ResponseUserDto> {
+    const user = await this.userService.updateUser(
+      currentUserId,
+      updateUserDto,
+    );
+    return this.userService.buildUserResponse(user);
   }
 }

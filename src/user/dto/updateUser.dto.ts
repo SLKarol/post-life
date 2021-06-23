@@ -1,17 +1,15 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateUserDto {
-  @IsNotEmpty()
+export class UpdateUserDto {
   @ApiProperty({ description: 'Имя/логин пользователя' })
   readonly username: string;
 
-  @IsNotEmpty()
-  @IsEmail({}, { message: 'Должен быть электронный адрес' })
+  @IsEmail({}, { message: 'Должен быть корректный электронный адрес' })
+  @IsOptional()
   @ApiProperty({ example: 'user@domain.com' })
   readonly email: string;
 
-  @IsNotEmpty()
   @ApiProperty()
   readonly password: string;
 
@@ -22,7 +20,7 @@ export class CreateUserDto {
   image: string;
 }
 
-export class MainCreateUserDto {
+export class MainUpdateUserDto {
   @ApiProperty({ description: 'Описание' })
-  readonly user: CreateUserDto;
+  readonly user: UpdateUserDto;
 }
