@@ -27,8 +27,9 @@ export const getOrmConfig = async (
   };
 };
 
+const { DATABASE_URL = '' } = process.env;
 const config: ConnectionOptions = {
-  url: process.env.DATABASE_URL,
+  url: DATABASE_URL,
   type: 'postgres',
   entities: [join(__dirname, '/../**/**.entity{.ts,.js}')],
   synchronize: false,
@@ -36,8 +37,8 @@ const config: ConnectionOptions = {
   cli: {
     migrationsDir: 'src/migrations',
   },
-  ssl: true,
-  extra: {
+  ssl: DATABASE_URL.indexOf('@localhost') === -1,
+  extra: DATABASE_URL.indexOf('@localhost') === -1 && {
     ssl: {
       rejectUnauthorized: false,
     },
