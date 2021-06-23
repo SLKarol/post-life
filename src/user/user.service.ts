@@ -4,13 +4,13 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { compare } from 'bcrypt';
 
-import { UserResponseInterface } from './types/userResponse.interface';
+import { CreateUserDto } from './dto/createUser.dto';
+import { LoginUserDto } from './dto/loginUser.dto';
+import { ResponseUserDto } from './dto/resonseUser.dto';
+import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
 
-import { CreateUserDto } from '@app/dto/createUser.dto';
-import { LoginUserDto } from '@app/dto/loginUser.dto';
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
-import { ListUsersResponseInterface } from './types/listUsersResponse.interface';
 
 @Injectable()
 export class UserService {
@@ -48,7 +48,7 @@ export class UserService {
     return this.userRepository.save(newUser);
   }
 
-  async buildUserResponse(user: UserEntity): Promise<UserResponseInterface> {
+  async buildUserResponse(user: UserEntity): Promise<ResponseUserDto> {
     const { id, password, ...userData } = user;
     return {
       user: {
@@ -97,7 +97,7 @@ export class UserService {
     return user;
   }
 
-  buildListUserResponse(users: UserEntity[]): ListUsersResponseInterface {
+  buildListUserResponse(users: UserEntity[]): ListUsersResponseDto {
     return {
       users: users.map((user) => {
         const { bio, image, username } = user;
