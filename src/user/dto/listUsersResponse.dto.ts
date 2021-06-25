@@ -1,8 +1,8 @@
-import { OmitType } from '@nestjs/swagger';
+import { ApiProperty, OmitType } from '@nestjs/swagger';
 
 import { UserEntity } from '../user.entity';
 
-class UserSecurityDto extends OmitType(UserEntity, [
+export class UserSecurityDto extends OmitType(UserEntity, [
   'id',
   'password',
   'hashPassword',
@@ -10,5 +10,6 @@ class UserSecurityDto extends OmitType(UserEntity, [
 ]) {}
 
 export class ListUsersResponseDto {
-  users: UserSecurityDto[];
+  @ApiProperty({ type: [UserSecurityDto] })
+  readonly users: UserSecurityDto[];
 }

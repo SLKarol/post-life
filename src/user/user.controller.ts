@@ -6,6 +6,7 @@ import {
   Get,
   UseGuards,
   Put,
+  Param,
 } from '@nestjs/common';
 
 import { ResponseUserDto } from './dto/resonseUser.dto';
@@ -19,6 +20,7 @@ import { JwtAuthGuard } from './guards/jwt.guard';
 import { User } from './decorators/user.decorator';
 import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
 import { MainUpdateUserDto, UpdateUserDto } from './dto/updateUser.dto';
+import { UserEntity } from './user.entity';
 
 @Controller('users')
 export class UserController {
@@ -36,6 +38,7 @@ export class UserController {
     @Body('user') createUserDto: CreateUserDto,
   ): Promise<ResponseUserDto> {
     const user = await this.userService.createUser(createUserDto);
+    await this.userService.sendConfirmMail(user);
     return this.userService.buildUserResponse(user);
   }
 
@@ -53,6 +56,11 @@ export class UserController {
   }
 
   @Get()
+  @ApiResponse({
+    description: 'Список пользователей',
+    status: 200,
+    type: ListUsersResponseDto,
+  })
   async findAll(): Promise<ListUsersResponseDto> {
     const users = await this.userService.findAll();
     return await this.userService.buildListUserResponse(users);
@@ -61,9 +69,16 @@ export class UserController {
   @Get('user')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  async currentUser(@User('id') currentUserId: string) {
+  @ApiResponse({
+    status: 200,
+    description: 'Текущий зарегестрированный юзер',
+    type: ResponseUserDto,
+  })
+  async currentUser(
+    @User('id') currentUserId: string,
+  ): Promise<ResponseUserDto> {
     const user = await this.userService.findUserById(currentUserId);
-    return user;
+    return this.userService.buildUserResponse(user);
   }
 
   @Put('user')
@@ -85,5 +100,17 @@ export class UserController {
       updateUserDto,
     );
     return this.userService.buildUserResponse(user);
+  }
+
+  @Get('confirm/:id')
+  @ApiResponse({
+    description: 'Пользователь, прошедший проверку почтового адреса',
+    status: 200,
+    type: ResponseUserDto,
+  })
+  async confirm(@Param('id') userId: string): Promise<ResponseUserDto> {
+    if (!userId) return null;
+    const user = await this.userService.setConfirmMail(userId);
+    return await this.userService.buildUserResponse(user);
   }
 }

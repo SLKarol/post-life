@@ -1,7 +1,9 @@
+import { join } from 'path';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { MailerService } from '@nestjs-modules/mailer';
 import { compare } from 'bcrypt';
 
 import { CreateUserDto } from './dto/createUser.dto';
@@ -20,6 +22,7 @@ export class UserService {
     private readonly userRepository: Repository<UserEntity>,
     private configService: ConfigService,
     private readonly jwtService: JwtService,
+    private readonly mailerService: MailerService,
   ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
@@ -50,10 +53,12 @@ export class UserService {
   }
 
   async buildUserResponse(user: UserEntity): Promise<ResponseUserDto> {
-    const { id, password, ...userData } = user;
+    const userReport = Object.assign({}, user);
+    delete userReport.id;
+    delete userReport.password;
     return {
       user: {
-        ...userData,
+        ...userReport,
         token: await this.generateJwt(user),
       },
     };
@@ -101,8 +106,8 @@ export class UserService {
   buildListUserResponse(users: UserEntity[]): ListUsersResponseDto {
     return {
       users: users.map((user) => {
-        const { bio, image, username } = user;
-        return { bio, image, username };
+        const { bio, image, username, active } = user;
+        return { bio, image, username, active };
       }),
     };
   }
@@ -117,6 +122,36 @@ export class UserService {
   ): Promise<UserEntity> {
     const user = await this.findUserById(userId);
     Object.assign(user, updateUserDto);
+    return await this.userRepository.save(user);
+  }
+
+  async sendConfirmMail(user: UserEntity) {
+    const urlConfirmAddress = this.configService.get<string>(
+      'URL_CONFIRM_ADDRESS',
+    );
+    // Отправка почты
+    return await this.mailerService
+      .sendMail({
+        to: user.email,
+        subject: 'Подтверждение регистрации',
+        template: join(__dirname, '/../templates', 'confirmReg'),
+        context: {
+          id: user.id,
+          username: user.username,
+          urlConfirmAddress,
+        },
+      })
+      .catch((e) => {
+        throw new HttpException(
+          `Ошибка работы почты: ${JSON.stringify(e)}`,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      });
+  }
+
+  async setConfirmMail(userId: string) {
+    const user = await this.findUserById(userId);
+    user.active = true;
     return await this.userRepository.save(user);
   }
 }

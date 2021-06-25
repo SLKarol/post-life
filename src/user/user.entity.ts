@@ -28,6 +28,10 @@ export class UserEntity {
   @ApiProperty()
   image: string;
 
+  @Column({ default: false })
+  @ApiProperty({ default: false, description: 'Активирована учётка?' })
+  active: boolean;
+
   @BeforeInsert()
   async hashPassword() {
     const salt = await genSalt(10);

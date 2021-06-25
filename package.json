@@ -25,6 +25,7 @@
     "heroku-postbuild": "npm run build && npm run db:migrate"
   },
   "dependencies": {
+    "@nestjs-modules/mailer": "^1.6.0",
     "@nestjs/common": "^7.6.18",
     "@nestjs/config": "^0.6.3",
     "@nestjs/core": "^7.6.18",
@@ -33,12 +34,14 @@
     "@nestjs/platform-express": "^7.6.18",
     "@nestjs/swagger": "^4.8.1",
     "@nestjs/typeorm": "^7.1.5",
+    "@types/nodemailer": "^6.4.2",
     "bcrypt": "^5.0.1",
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "cross-env": "^7.0.3",
     "jsonwebtoken": "^8.5.1",
     "module-alias": "^2.2.2",
+    "nodemailer": "^6.6.2",
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "pg": "^8.6.0",
