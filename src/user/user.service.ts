@@ -4,7 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
-import { compare } from 'bcrypt';
+import { compare, genSalt, hash } from 'bcrypt';
+import { generate } from 'generate-password';
 
 import { CreateUserDto } from './dto/createUser.dto';
 import { LoginUserDto } from './dto/loginUser.dto';
@@ -153,5 +154,42 @@ export class UserService {
     const user = await this.findUserById(userId);
     user.active = true;
     return await this.userRepository.save(user);
+  }
+
+  /**
+   * Задать новый пароль пользователю
+   * @param userId
+   * @param {string} password Если не задан, то придумывается сервером
+   */
+  async setNewUserPassword(
+    userId: string,
+    password?: string,
+  ): Promise<{ newPassword: string; user: UserEntity }> {
+    const newPassword = password || generate({ numbers: true });
+    const user = await this.findUserById(userId);
+    const salt = await genSalt(10);
+    const hashPassword = await hash(newPassword, salt);
+    user.password = hashPassword;
+    await this.userRepository.save(user);
+    return { newPassword, user };
+  }
+
+  async sendNewPasswordToMail(user: UserEntity, password: string) {
+    return await this.mailerService
+      .sendMail({
+        to: user.email,
+        subject: 'Новый пароль',
+        template: join(__dirname, '/../templates', 'newPassword'),
+        context: {
+          username: user.username,
+          password,
+        },
+      })
+      .catch((e) => {
+        throw new HttpException(
+          `Ошибка работы почты: ${JSON.stringify(e)}`,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      });
   }
 }

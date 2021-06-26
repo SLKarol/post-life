@@ -20,7 +20,10 @@ import { JwtAuthGuard } from './guards/jwt.guard';
 import { User } from './decorators/user.decorator';
 import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
 import { MainUpdateUserDto, UpdateUserDto } from './dto/updateUser.dto';
-import { UserEntity } from './user.entity';
+import {
+  ChangeUserPasswordDto,
+  MainChangeUserPassportDto,
+} from './dto/changeUserPassword.dto';
 
 @Controller('users')
 export class UserController {
@@ -112,5 +115,40 @@ export class UserController {
     if (!userId) return null;
     const user = await this.userService.setConfirmMail(userId);
     return await this.userService.buildUserResponse(user);
+  }
+
+  @Put('resetPassword/:id')
+  @ApiResponse({
+    description: 'Пароль сброшен',
+    status: 200,
+    type: Boolean,
+  })
+  async resetPassword(@Param('id') userId: string) {
+    if (!userId) return null;
+    const result = await this.userService.setNewUserPassword(userId);
+    this.userService.sendNewPasswordToMail(result.user, result.newPassword);
+    return true;
+  }
+
+  @Put('changePassword')
+  @UsePipes(new BackendValidationPipe())
+  @UseGuards(JwtAuthGuard)
+  @ApiBody({ type: MainChangeUserPassportDto })
+  @ApiResponse({
+    description: 'Пользователь',
+    status: 200,
+    type: ResponseUserDto,
+  })
+  @ApiBearerAuth()
+  async changePassword(
+    @User('id') currentUserId: string,
+    @Body('user') changeUserPasswordDto: ChangeUserPasswordDto,
+  ) {
+    if (!currentUserId) return null;
+    const result = await this.userService.setNewUserPassword(
+      currentUserId,
+      changeUserPasswordDto.password,
+    );
+    return await this.userService.buildUserResponse(result.user);
   }
 }
