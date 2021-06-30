@@ -5,7 +5,6 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
 import { compare, genSalt, hash } from 'bcrypt';
-import { generate } from 'generate-password';
 
 import { CreateUserDto } from './dto/createUser.dto';
 import { LoginUserDto } from './dto/loginUser.dto';
@@ -156,22 +155,11 @@ export class UserService {
     return await this.userRepository.save(user);
   }
 
-  /**
-   * Задать новый пароль пользователю
-   * @param userId
-   * @param {string} password Если не задан, то придумывается сервером
-   */
-  async setNewUserPassword(
-    userId: string,
-    password?: string,
-  ): Promise<{ newPassword: string; user: UserEntity }> {
-    const newPassword = password || generate({ numbers: true });
-    const user = await this.findUserById(userId);
+  async savePassword(user: UserEntity, password: string): Promise<UserEntity> {
     const salt = await genSalt(10);
-    const hashPassword = await hash(newPassword, salt);
+    const hashPassword = await hash(password, salt);
     user.password = hashPassword;
-    await this.userRepository.save(user);
-    return { newPassword, user };
+    return await this.userRepository.save(user);
   }
 
   async sendNewPasswordToMail(user: UserEntity, password: string) {

@@ -7,7 +7,9 @@ import {
   UseGuards,
   Put,
   Param,
+  Patch,
 } from '@nestjs/common';
+import { generate } from 'generate-password';
 
 import { ResponseUserDto } from './dto/resonseUser.dto';
 import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
@@ -20,10 +22,7 @@ import { JwtAuthGuard } from './guards/jwt.guard';
 import { User } from './decorators/user.decorator';
 import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
 import { MainUpdateUserDto, UpdateUserDto } from './dto/updateUser.dto';
-import {
-  ChangeUserPasswordDto,
-  MainChangeUserPassportDto,
-} from './dto/changeUserPassword.dto';
+import { MainPatchUserDto, PatchUserDto } from './dto/patchUser.dto';
 
 @Controller('users')
 export class UserController {
@@ -84,7 +83,7 @@ export class UserController {
     return this.userService.buildUserResponse(user);
   }
 
-  @Put('user')
+  @Put()
   @UsePipes(new BackendValidationPipe())
   @UseGuards(JwtAuthGuard)
   @ApiBody({ type: MainUpdateUserDto })
@@ -117,7 +116,7 @@ export class UserController {
     return await this.userService.buildUserResponse(user);
   }
 
-  @Put('resetPassword/:id')
+  @Patch('resetPassword/:id')
   @ApiResponse({
     description: 'Пароль сброшен',
     status: 200,
@@ -125,30 +124,37 @@ export class UserController {
   })
   async resetPassword(@Param('id') userId: string) {
     if (!userId) return null;
-    const result = await this.userService.setNewUserPassword(userId);
-    this.userService.sendNewPasswordToMail(result.user, result.newPassword);
+    let user = await this.userService.findUserById(userId);
+    const newPassword = generate({ numbers: true });
+    user = await this.userService.savePassword(user, newPassword);
+    this.userService.sendNewPasswordToMail(user, newPassword);
     return true;
   }
 
-  @Put('changePassword')
+  /**
+   * Для смены пароля или аватарки
+   * (аватарка в будущем)
+   */
+  @Patch()
   @UsePipes(new BackendValidationPipe())
   @UseGuards(JwtAuthGuard)
-  @ApiBody({ type: MainChangeUserPassportDto })
+  @ApiBody({ type: MainPatchUserDto })
   @ApiResponse({
     description: 'Пользователь',
     status: 200,
     type: ResponseUserDto,
   })
   @ApiBearerAuth()
-  async changePassword(
+  async patchUser(
     @User('id') currentUserId: string,
-    @Body('user') changeUserPasswordDto: ChangeUserPasswordDto,
-  ) {
+    @Body('user') patchUserDto: PatchUserDto,
+  ): Promise<ResponseUserDto> {
     if (!currentUserId) return null;
-    const result = await this.userService.setNewUserPassword(
-      currentUserId,
-      changeUserPasswordDto.password,
-    );
-    return await this.userService.buildUserResponse(result.user);
+    const { password } = patchUserDto;
+    let user = await this.userService.findUserById(currentUserId);
+    if (password) {
+      user = await this.userService.savePassword(user, password);
+    }
+    return await this.userService.buildUserResponse(user);
   }
 }
