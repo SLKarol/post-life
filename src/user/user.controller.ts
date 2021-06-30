@@ -32,16 +32,16 @@ export class UserController {
   @UsePipes(new BackendValidationPipe())
   @ApiBody({ type: MainCreateUserDto })
   @ApiResponse({
-    description: 'Зарегестрированный пользователь',
+    description: 'Результат операции',
     status: 200,
-    type: ResponseUserDto,
+    type: Boolean,
   })
   async createUser(
     @Body('user') createUserDto: CreateUserDto,
-  ): Promise<ResponseUserDto> {
+  ): Promise<boolean> {
     const user = await this.userService.createUser(createUserDto);
     await this.userService.sendConfirmMail(user);
-    return this.userService.buildUserResponse(user);
+    return true;
   }
 
   @Post('login')
