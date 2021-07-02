@@ -100,6 +100,12 @@ export class UserService {
     }
 
     delete user.password;
+    if (!user.active) {
+      throw new HttpException(
+        'Вам необходимо активировать свою учётную запись!',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
     return user;
   }
 
@@ -179,5 +185,10 @@ export class UserService {
           HttpStatus.UNPROCESSABLE_ENTITY,
         );
       });
+  }
+
+  async setAvatar(user: UserEntity, urlAvatar: string): Promise<UserEntity> {
+    user.image = urlAvatar;
+    return await this.userRepository.save(user);
   }
 }

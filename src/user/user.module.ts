@@ -9,6 +9,7 @@ import { UserController } from './user.controller';
 import { UserEntity } from './user.entity';
 import { UserService } from './user.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { CloudinaryModule } from '@app/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       useFactory: getJWTConfig,
     }),
     PassportModule,
+    CloudinaryModule,
   ],
   controllers: [UserController],
   providers: [UserService, JwtStrategy],

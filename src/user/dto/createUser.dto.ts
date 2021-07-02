@@ -18,8 +18,8 @@ export class CreateUserDto {
   @ApiProperty({ description: 'О себе' })
   bio: string;
 
-  @ApiProperty({ description: 'Аватарка. Пока в разработке такая фича' })
-  image: string;
+  @ApiProperty({ description: 'Аватарка.', type: 'string', format: 'binary' })
+  image: any;
 }
 
 export class MainCreateUserDto {

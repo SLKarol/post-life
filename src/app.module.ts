@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { getOrmConfig } from './configs/ormconfig';
 import { UserModule } from './user/user.module';
 import { getMailConfig } from './configs/mail.config';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { getMailConfig } from './configs/mail.config';
       inject: [ConfigService],
       useFactory: getMailConfig,
     }),
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
