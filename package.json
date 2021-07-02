@@ -10,8 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nodemon",
-    "start:dev": "nest start --watch",
-    "start:debug": "nest start --debug --watch",
+    "start:dev": "cross-env IS_TS_NODE=true ts-node -r tsconfig-paths/register src/main.ts",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
@@ -24,7 +23,9 @@
     "db:create": "npm run typeorm migration:generate -- -n",
     "db:migrate": "npm run typeorm migration:run",
     "db:seed": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js --config src/ormseedconfig.ts migration:run",
-    "heroku-postbuild": "npm-run-all build db:migrate"
+    "heroku-postbuild": "npm-run-all build db:migrate",
+    "eslint:info": "node_modules/.bin/eslint src --ext .ts --color || exit 0",
+    "eslint:fix": "node_modules/.bin/eslint src --ext .ts --color --fix || exit 0"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^1.6.0",
