@@ -1,8 +1,8 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 
-import { CreateUserDto } from './createUser.dto';
+import { UserDto } from './user.dto';
 
-export class PatchUserDto extends PartialType(CreateUserDto) {}
+export class PatchUserDto extends PartialType(UserDto) {}
 
 export class MainPatchUserDto {
   @ApiProperty({ description: 'Данные для обновления юзера' })

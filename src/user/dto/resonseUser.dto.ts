@@ -1,15 +1,18 @@
-import { ApiProperty, IntersectionType } from '@nestjs/swagger';
+import { ApiProperty, IntersectionType, OmitType } from '@nestjs/swagger';
 
-import { UserTypeDto } from './userType.dto';
+import { UserEntity } from '../user.entity';
 
 class TokenDto {
-  @ApiProperty()
+  @ApiProperty({ description: 'Токен' })
   token: string;
 }
 
-class UserDto extends IntersectionType(UserTypeDto, TokenDto) {}
+class UserWithTokenDto extends IntersectionType(
+  OmitType(UserEntity, ['id', 'password', 'hashPassword']),
+  TokenDto,
+) {}
 
 export class ResponseUserDto {
   @ApiProperty({ description: 'Данные о пользователе' })
-  user: UserDto;
+  user: UserWithTokenDto;
 }

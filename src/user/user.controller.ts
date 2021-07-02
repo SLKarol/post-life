@@ -25,12 +25,11 @@ import { Express } from 'express';
 import { ResponseUserDto } from './dto/resonseUser.dto';
 import { BackendValidationPipe } from '@app/shared/pipes/backendValidation.pipe';
 import { UserService } from './user.service';
-import { CreateUserDto, MainCreateUserDto } from './dto/createUser.dto';
+import { MainUserDto } from './dto/user.dto';
 import { LoginUserDto, MainLoginDto } from './dto/loginUser.dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { User } from './decorators/user.decorator';
 import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
-import { MainUpdateUserDto, UpdateUserDto } from './dto/updateUser.dto';
 import { MainPatchUserDto, PatchUserDto } from './dto/patchUser.dto';
 import { CloudinaryService } from '@app/cloudinary/cloudinary.service';
 import { AvatarDto } from './dto/avatar.dto';
@@ -45,16 +44,14 @@ export class UserController {
 
   @Post()
   @UsePipes(new BackendValidationPipe())
-  @ApiBody({ type: MainCreateUserDto })
+  @ApiBody({ type: MainUserDto })
   @ApiResponse({
     description: 'Результат операции',
     status: 200,
     type: Boolean,
   })
-  async createUser(
-    @Body('user') createUserDto: CreateUserDto,
-  ): Promise<boolean> {
-    const user = await this.userService.createUser(createUserDto);
+  async createUser(@Body() formData: MainUserDto): Promise<boolean> {
+    const user = await this.userService.createUser(formData.user);
     await this.userService.sendConfirmMail(user);
     return true;
   }
@@ -101,7 +98,7 @@ export class UserController {
   @Put()
   @UsePipes(new BackendValidationPipe())
   @UseGuards(JwtAuthGuard)
-  @ApiBody({ type: MainUpdateUserDto })
+  @ApiBody({ type: MainUserDto })
   @ApiResponse({
     description: 'Обновлённый пользователь',
     status: 200,
@@ -110,11 +107,11 @@ export class UserController {
   @ApiBearerAuth()
   async updateCurrentUser(
     @User('id') currentUserId: string,
-    @Body('user') updateUserDto: UpdateUserDto,
+    @Body() updateUserDto: MainUserDto,
   ): Promise<ResponseUserDto> {
     const user = await this.userService.updateUser(
       currentUserId,
-      updateUserDto,
+      updateUserDto.user,
     );
     return this.userService.buildUserResponse(user);
   }

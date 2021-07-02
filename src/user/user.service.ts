@@ -6,14 +6,13 @@ import { JwtService } from '@nestjs/jwt';
 import { MailerService } from '@nestjs-modules/mailer';
 import { compare, genSalt, hash } from 'bcrypt';
 
-import { CreateUserDto } from './dto/createUser.dto';
+import { UserDto } from './dto/user.dto';
 import { LoginUserDto } from './dto/loginUser.dto';
 import { ResponseUserDto } from './dto/resonseUser.dto';
 import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
 
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
-import { UpdateUserDto } from './dto/updateUser.dto';
 
 @Injectable()
 export class UserService {
@@ -25,7 +24,7 @@ export class UserService {
     private readonly mailerService: MailerService,
   ) {}
 
-  async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
+  async createUser(createUserDto: UserDto): Promise<UserEntity> {
     const errorResponse = {
       errors: {},
     };
@@ -124,7 +123,7 @@ export class UserService {
 
   async updateUser(
     userId: string,
-    updateUserDto: UpdateUserDto,
+    updateUserDto: UserDto,
   ): Promise<UserEntity> {
     const user = await this.findUserById(userId);
     Object.assign(user, updateUserDto);
