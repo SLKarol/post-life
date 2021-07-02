@@ -140,7 +140,7 @@ export class UserService {
       .sendMail({
         to: user.email,
         subject: 'Подтверждение регистрации',
-        template: join(__dirname, '/../../templates', 'confirmReg'),
+        template: join(__dirname, '/../templates', 'confirmReg'),
         context: {
           id: user.id,
           username: user.username,
@@ -173,7 +173,7 @@ export class UserService {
       .sendMail({
         to: user.email,
         subject: 'Новый пароль',
-        template: join(__dirname, '/../../templates', 'newPassword'),
+        template: join(__dirname, '/../templates', 'newPassword'),
         context: {
           username: user.username,
           password,

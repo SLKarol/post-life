@@ -15,7 +15,7 @@ export const getMailConfig = async (
       from: `"${mailFromName}" <${mailFromAddress}>`,
     },
     template: {
-      dir: join(__dirname, '/../../templates'),
+      dir: join(__dirname, '/../templates'),
       adapter: new EjsAdapter(),
       options: {
         strict: false,
