@@ -82,7 +82,17 @@ export class UserService {
       {
         email: loginUserDto.email,
       },
-      { select: ['id', 'username', 'email', 'bio', 'image', 'password'] },
+      {
+        select: [
+          'id',
+          'username',
+          'email',
+          'bio',
+          'image',
+          'password',
+          'active',
+        ],
+      },
     );
 
     if (!user) {

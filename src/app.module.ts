@@ -9,6 +9,7 @@ import { getOrmConfig } from './configs/ormconfig';
 import { UserModule } from './user/user.module';
 import { getMailConfig } from './configs/mail.config';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { TagModule } from '@app/tag/tag.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
       useFactory: getMailConfig,
     }),
     CloudinaryModule,
+    TagModule,
   ],
   controllers: [AppController],
   providers: [AppService],
