@@ -9,7 +9,7 @@ import {
   UsePipes,
   Delete,
 } from '@nestjs/common';
-import { ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 
 import { TagService } from '@app/tag/tag.service';
 import { TagEntity } from './tag.entity';
@@ -38,6 +38,7 @@ export class TagController {
     status: 200,
     type: ResponseTagDto,
   })
+  @ApiBearerAuth()
   async insertTag(@Body() addTagDto: FullCrUpTagDto): Promise<ResponseTagDto> {
     const { name } = addTagDto.tag;
     const addedTag = await this.tagService.insertTag(name);
@@ -52,6 +53,7 @@ export class TagController {
     status: 200,
     type: ResponseTagDto,
   })
+  @ApiBearerAuth()
   async updateTag(
     @Param('id') id: string,
     @Body() editTagDto: FullCrUpTagDto,
@@ -64,6 +66,7 @@ export class TagController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
   @UsePipes(new BackendValidationPipe())
+  @ApiBearerAuth()
   async deleteTag(@Param('id') id: string): Promise<DeleteResult> {
     return this.tagService.deleteTag(id);
   }
