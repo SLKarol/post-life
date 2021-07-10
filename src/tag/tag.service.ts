@@ -3,6 +3,7 @@ import { InjectRepository, InjectConnection } from '@nestjs/typeorm';
 import { Connection, DeleteResult, Repository } from 'typeorm';
 
 import { TagEntity } from '@app/tag/tag.entity';
+import { TagType } from './dto/tag.dto';
 
 @Injectable()
 export class TagService {
@@ -16,7 +17,7 @@ export class TagService {
     return await this.tagRepository.find();
   }
 
-  async insertTag(nameTag: string): Promise<TagEntity> {
+  async insertTag(nameTag: string): Promise<TagType> {
     const ids: { id: string }[] = await this.connectionDB.query(
       'Select * from insert_tag($1) as id;',
       [nameTag],

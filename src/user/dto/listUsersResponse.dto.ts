@@ -7,6 +7,8 @@ class SecurityUserDto extends OmitType(UserEntity, [
   'password',
   'hashPassword',
   'email',
+  'articles',
+  'favorites',
 ]) {}
 
 export class ListUsersResponseDto {
