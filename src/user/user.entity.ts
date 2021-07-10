@@ -1,6 +1,16 @@
-import { BeforeInsert, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  ManyToMany,
+  JoinTable,
+} from 'typeorm';
 import { hash, genSalt } from 'bcrypt';
 import { ApiProperty } from '@nestjs/swagger';
+
+import { ArticleEntity } from '@app/article/article.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -37,4 +47,11 @@ export class UserEntity {
     const salt = await genSalt(10);
     this.password = await hash(this.password, salt);
   }
+
+  @OneToMany(() => ArticleEntity, (article) => article.author)
+  articles: ArticleEntity[];
+
+  @ManyToMany(() => ArticleEntity)
+  @JoinTable()
+  favorites: ArticleEntity[];
 }
