@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateFunctionInsertTag1625483587801
+export class CreateFunctionInsertTag1625854831500
   implements MigrationInterface
 {
-  name = 'CreateFunctionInsertTag1625483587801';
+  name = 'CreateFunctionInsertTag1625854831500';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(

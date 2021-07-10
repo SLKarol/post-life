@@ -15,7 +15,7 @@ export class ArticleEntity {
   @ApiProperty()
   id: string;
 
-  @Column()
+  @Column({ unique: true })
   @ApiProperty()
   slug: string;
 
