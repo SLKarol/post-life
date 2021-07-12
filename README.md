@@ -43,6 +43,14 @@ CLOUDINARY_API_KEY=123456789123456
 CLOUDINARY_API_SECRET=apiSecretPrase
 ```
 
+Для установки схемы базы данных можно воспользоваться скриптом
+
+```bash
+npm run db:migrate
+```
+
+Либо сделать восстановление БД из файла **schema.sql**
+
 ## Запуск приложения
 
 ```bash
