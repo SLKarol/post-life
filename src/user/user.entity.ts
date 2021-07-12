@@ -11,6 +11,7 @@ import { hash, genSalt } from 'bcrypt';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { ArticleEntity } from '@app/article/article.entity';
+import { CommentEntity } from '@app/comment/comment.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -54,4 +55,7 @@ export class UserEntity {
   @ManyToMany(() => ArticleEntity)
   @JoinTable()
   favorites: ArticleEntity[];
+
+  @OneToMany(() => CommentEntity, (comments) => comments.author)
+  comments: CommentEntity[];
 }

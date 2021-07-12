@@ -8,6 +8,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 import { UserEntity } from '@app/user/user.entity';
+import { CommentEntity } from '@app/comment/comment.entity';
 
 @Entity({ name: 'articles' })
 export class ArticleEntity {
@@ -44,6 +45,14 @@ export class ArticleEntity {
     this.updatedAt = new Date();
   }
 
-  @ManyToOne(() => UserEntity, (user) => user.articles, { eager: true })
+  @ManyToOne(() => UserEntity, (user) => user.articles, {
+    eager: true,
+  })
   author: UserEntity;
+
+  @ManyToOne(() => CommentEntity, (comment) => comment.article, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
+  comment: CommentEntity;
 }
