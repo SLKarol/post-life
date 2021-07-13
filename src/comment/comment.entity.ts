@@ -22,7 +22,7 @@ export class CommentEntity {
 
   @Column({ comment: 'Текст комментария' })
   @ApiProperty({ description: 'Текст комментария' })
-  comment: string;
+  body: string;
 
   @ApiProperty()
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
