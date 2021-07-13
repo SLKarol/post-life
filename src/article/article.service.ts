@@ -56,12 +56,12 @@ export class ArticleService {
   async buildArticleResponse(
     article: ArticleEntity,
     currentUserId: string,
-  ): Promise<ResponseArticleDto> {
+  ): Promise<any> {
     const author = await this.profileService.getProfile(
       currentUserId,
       article.author.username,
     );
-    const { id, ...responseArticle } = article;
+    const { id, author: r, ...responseArticle } = article;
     const re = { ...responseArticle, author };
     return { article: { ...re } };
   }

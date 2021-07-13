@@ -29,7 +29,7 @@ export class ArticleController {
   @UsePipes(new BackendValidationPipe())
   @ApiBearerAuth()
   @ApiResponse({
-    description: 'Добавленный тэг',
+    description: 'Добавленная заметка',
     status: 200,
     type: ResponseArticleDto,
   })
