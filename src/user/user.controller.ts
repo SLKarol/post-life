@@ -22,7 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { Express } from 'express';
 
-import { ResponseUserDto } from './dto/resonseUser.dto';
+import { ResponseUserDto } from './dto/responseUser.dto';
 import { BackendValidationPipe } from '@app/shared/pipes/backendValidation.pipe';
 import { UserService } from './user.service';
 import { MainUserDto } from './dto/user.dto';

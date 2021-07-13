@@ -8,7 +8,7 @@ import { compare, genSalt, hash } from 'bcrypt';
 
 import { UserDto } from './dto/user.dto';
 import { LoginUserDto } from './dto/loginUser.dto';
-import { ResponseUserDto } from './dto/resonseUser.dto';
+import { ResponseUserDto } from './dto/responseUser.dto';
 import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
 
 import { Repository } from 'typeorm';
