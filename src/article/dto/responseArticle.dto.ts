@@ -10,6 +10,7 @@ class Article extends OmitType(ArticleEntity, [
 ] as const) {}
 
 class Author {
+  @ApiProperty()
   author: ProfileDto;
 }
 
