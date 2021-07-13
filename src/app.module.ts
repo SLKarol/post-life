@@ -10,6 +10,8 @@ import { UserModule } from './user/user.module';
 import { getMailConfig } from './configs/mail.config';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { TagModule } from '@app/tag/tag.module';
+import { ArticleModule } from './article/article.module';
+import { ProfileModule } from './profile/profile.module';
 
 @Module({
   imports: [
@@ -27,6 +29,8 @@ import { TagModule } from '@app/tag/tag.module';
     }),
     CloudinaryModule,
     TagModule,
+    ArticleModule,
+    ProfileModule,
   ],
   controllers: [AppController],
   providers: [AppService],

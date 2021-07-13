@@ -64,8 +64,8 @@ export class UserService {
   }
 
   private async generateJwt(user: UserEntity): Promise<string> {
-    const { id, active } = user;
-    return await this.jwtService.signAsync({ id, active });
+    const { id, active, username } = user;
+    return await this.jwtService.signAsync({ id, active, username });
   }
 
   async findAll(): Promise<UserEntity[]> {

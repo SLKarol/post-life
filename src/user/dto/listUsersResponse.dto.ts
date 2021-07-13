@@ -2,7 +2,7 @@ import { ApiProperty, OmitType } from '@nestjs/swagger';
 
 import { UserEntity } from '../user.entity';
 
-class SecurityUserDto extends OmitType(UserEntity, [
+export class SecurityUserDto extends OmitType(UserEntity, [
   'id',
   'password',
   'hashPassword',
