@@ -4,6 +4,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   ManyToOne,
+  OneToMany,
 } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -50,9 +51,6 @@ export class ArticleEntity {
   })
   author: UserEntity;
 
-  @ManyToOne(() => CommentEntity, (comment) => comment.article, {
-    eager: true,
-    onDelete: 'CASCADE',
-  })
-  comment: CommentEntity;
+  @OneToMany(() => CommentEntity, (comments) => comments.author)
+  comments: CommentEntity[];
 }
