@@ -8,10 +8,10 @@ export class FollowEntity {
   id: string;
 
   @ApiProperty({ nullable: false })
-  @Column({ nullable: false })
+  @Column({ nullable: false, type: 'uuid' })
   followerId: string;
 
   @ApiProperty({ nullable: false })
-  @Column({ nullable: false })
+  @Column({ nullable: false, type: 'uuid' })
   followingId: string;
 }
