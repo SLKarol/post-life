@@ -3,7 +3,7 @@ import { ApiProperty, OmitType, IntersectionType } from '@nestjs/swagger';
 import { ArticleEntity } from '../article.entity';
 import { ProfileDto } from '@app/profile/dto/profile.dto';
 
-class Article extends OmitType(ArticleEntity, [
+class SecurityArticleDto extends OmitType(ArticleEntity, [
   'id',
   'author',
   'updateTimestamp',
@@ -14,7 +14,7 @@ class ArticleExtend {
   author: ProfileDto;
 
   @ApiProperty({
-    description: 'Число пользователей, кто выбрал эту запись в "Избранное"',
+    description: 'Число пользователей, кто добавил эту запись в "Избранное"',
   })
   favoritesCount: number;
 
@@ -24,12 +24,12 @@ class ArticleExtend {
   commentsCount: number;
 }
 
-export class ArticleResponseDto extends IntersectionType(
-  Article,
+export class ArticleInfoDto extends IntersectionType(
+  SecurityArticleDto,
   ArticleExtend,
 ) {}
 
 export class ResponseArticleDto {
   @ApiProperty()
-  article: ArticleResponseDto;
+  article: ArticleInfoDto;
 }

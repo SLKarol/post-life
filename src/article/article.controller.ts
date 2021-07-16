@@ -16,7 +16,7 @@ import { ResponseArticleDto } from './dto/responseArticle.dto';
 import { User } from '@app/user/decorators/user.decorator';
 import { UserEntity } from '@app/user/user.entity';
 import { ArticleService } from './article.service';
-import { JwtAuthGuard } from '@app/user/guards/jwt.guard';
+import { JwtAuthGuard, AllowNullUserGuard } from '@app/user/guards/jwt.guard';
 import { BackendValidationPipe } from '@app/shared/pipes/backendValidation.pipe';
 
 @Controller('articles')
@@ -40,6 +40,21 @@ export class ArticleController {
       currentUser,
       createArticleDto,
     );
-    return { article };
+    return this.articleService.buildArticleResponse(article);
+  }
+
+  @Get(':slug')
+  @UseGuards(AllowNullUserGuard)
+  @ApiResponse({
+    description: 'Заметка',
+    status: 200,
+    type: ResponseArticleDto,
+  })
+  async getSingleArticle(
+    @Param('slug') slug: string,
+    @User() currentUser: UserEntity | null,
+  ): Promise<ResponseArticleDto> {
+    const article = await this.articleService.findBySlug(slug, currentUser);
+    return this.articleService.buildArticleResponse(article);
   }
 }

@@ -7,21 +7,20 @@ import { ArticleEntity } from './article.entity';
 import { UserEntity } from '@app/user/user.entity';
 import { CreateArticleDto } from './dto/createArticle.dto';
 import { WARNING_NOT_ACTIVE_USER } from '@app/constants/user';
-import { ArticleResponseDto } from './dto/responseArticle.dto';
-import { ProfileService } from '@app/profile/profile.service';
+import { ArticleInfoDto, ResponseArticleDto } from './dto/responseArticle.dto';
+// import { ProfileService } from '@app/profile/profile.service';
 
 @Injectable()
 export class ArticleService {
   constructor(
     @InjectRepository(ArticleEntity)
-    private readonly articleRepository: Repository<ArticleEntity>,
-    private readonly profileService: ProfileService,
+    private readonly articleRepository: Repository<ArticleEntity>, // private readonly profileService: ProfileService,
   ) {}
 
   async createArticle(
     currentUser: UserEntity,
     createArticleDto: CreateArticleDto,
-  ): Promise<ArticleResponseDto> {
+  ): Promise<ArticleInfoDto> {
     // Если пользователь не активировал свою учётку, то ему не положено создавать статьи
     if (!currentUser.active) {
       throw new HttpException(WARNING_NOT_ACTIVE_USER, HttpStatus.FORBIDDEN);
@@ -39,7 +38,7 @@ export class ArticleService {
         tagList,
       ],
     );
-    return newArticles[0]['articles'] as ArticleResponseDto;
+    return newArticles[0]['articles'] as ArticleInfoDto;
   }
 
   /**
@@ -53,5 +52,21 @@ export class ArticleService {
       '-' +
       ((Math.random() * Math.pow(36, 6)) | 0).toString(36)
     );
+  }
+
+  buildArticleResponse(article: ArticleInfoDto): ResponseArticleDto {
+    return { article };
+  }
+
+  async findBySlug(
+    slug: string,
+    user: UserEntity | null,
+  ): Promise<ArticleInfoDto> {
+    const userId = user && user.id;
+    const articles = await this.articleRepository.query(
+      'Select article_by_slug($1, $2) as articles;',
+      [slug, userId],
+    );
+    return articles[0]['articles'] as ArticleInfoDto;
   }
 }
