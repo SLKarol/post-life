@@ -7,7 +7,7 @@ export class CreateFunctionGetArticleJson1626341790000
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
-      `CREATE OR REPLACE FUNCTION public.article_json(
+      `CREATE OR REPLACE FUNCTION article_json(
   articleid uuid,
   userid uuid)
     RETURNS json
