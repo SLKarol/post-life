@@ -35,14 +35,14 @@ import { CloudinaryService } from '@app/cloudinary/cloudinary.service';
 import { AvatarDto } from './dto/avatar.dto';
 import { UploadFileDto } from '@app/types/uploadFile.interface';
 
-@Controller('users')
+@Controller()
 export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  @Post()
+  @Post('users')
   @UsePipes(new BackendValidationPipe())
   @ApiBody({ type: MainUserDto })
   @ApiResponse({
@@ -56,7 +56,7 @@ export class UserController {
     return true;
   }
 
-  @Post('login')
+  @Post('users/login')
   @UsePipes(new BackendValidationPipe())
   @ApiBody({ type: MainLoginDto })
   @ApiResponse({
@@ -69,7 +69,7 @@ export class UserController {
     return await this.userService.buildUserResponse(user);
   }
 
-  @Get()
+  @Get('user')
   @ApiResponse({
     description: 'Список пользователей',
     status: 200,
@@ -95,7 +95,7 @@ export class UserController {
     return this.userService.buildUserResponse(user);
   }
 
-  @Put()
+  @Put('user')
   @UsePipes(new BackendValidationPipe())
   @UseGuards(JwtAuthGuard)
   @ApiBody({ type: MainUserDto })
@@ -116,7 +116,7 @@ export class UserController {
     return this.userService.buildUserResponse(user);
   }
 
-  @Get('confirm/:id')
+  @Get('user/confirm/:id')
   @ApiResponse({
     description: 'Пользователь, прошедший проверку почтового адреса',
     status: 200,
@@ -128,7 +128,7 @@ export class UserController {
     return await this.userService.buildUserResponse(user);
   }
 
-  @Patch('resetPassword/:id')
+  @Patch('user/resetPassword/:id')
   @ApiResponse({
     description: 'Пароль сброшен',
     status: 200,
@@ -147,7 +147,7 @@ export class UserController {
    * Для смены пароля
    * (аватарка в будущем)
    */
-  @Patch()
+  @Patch('user')
   @UsePipes(new BackendValidationPipe())
   @UseGuards(JwtAuthGuard)
   @ApiBody({ type: MainPatchUserDto })
@@ -170,7 +170,7 @@ export class UserController {
     return await this.userService.buildUserResponse(user);
   }
 
-  @Post('avatar')
+  @Post('user/avatar')
   @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtAuthGuard)
   @ApiConsumes('multipart/form-data')
