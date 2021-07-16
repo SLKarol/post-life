@@ -13,8 +13,9 @@ export class TagService {
     @InjectConnection() private connectionDB: Connection,
   ) {}
 
-  async findAll(): Promise<TagEntity[]> {
-    return await this.tagRepository.find();
+  async findAll(): Promise<string[]> {
+    const tags = await this.tagRepository.find();
+    return tags.map((tag) => tag.name);
   }
 
   async insertTag(nameTag: string): Promise<TagType> {

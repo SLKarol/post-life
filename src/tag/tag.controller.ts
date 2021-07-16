@@ -12,7 +12,6 @@ import {
 import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 
 import { TagService } from '@app/tag/tag.service';
-import { TagEntity } from './tag.entity';
 import { JwtAuthGuard } from '@app/user/guards/jwt.guard';
 import { BackendValidationPipe } from '@app/shared/pipes/backendValidation.pipe';
 import { FullCrUpTagDto } from './dto/crUpTag.dto';
@@ -23,7 +22,7 @@ import { DeleteResult } from 'typeorm';
 export class TagController {
   constructor(private readonly tagService: TagService) {}
   @Get()
-  async findAll(): Promise<{ tags: TagEntity[] }> {
+  async findAll(): Promise<{ tags: string[] }> {
     const tags = await this.tagService.findAll();
     return {
       tags,
@@ -36,13 +35,13 @@ export class TagController {
   @ApiResponse({
     description: 'Добавленный тэг',
     status: 200,
-    type: ResponseTagDto,
+    type: String,
   })
   @ApiBearerAuth()
-  async insertTag(@Body() addTagDto: FullCrUpTagDto): Promise<ResponseTagDto> {
+  async insertTag(@Body() addTagDto: FullCrUpTagDto): Promise<string> {
     const { name } = addTagDto.tag;
-    const addedTag = await this.tagService.insertTag(name);
-    return { tag: addedTag };
+    await this.tagService.insertTag(name);
+    return name;
   }
 
   @Put(':id')
