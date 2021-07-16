@@ -9,14 +9,27 @@ class Article extends OmitType(ArticleEntity, [
   'updateTimestamp',
 ] as const) {}
 
-class Author {
+class ArticleExtend {
   @ApiProperty()
   author: ProfileDto;
+
+  @ApiProperty({
+    description: 'Число пользователей, кто выбрал эту запись в "Избранное"',
+  })
+  favoritesCount: number;
+
+  @ApiProperty({
+    description: 'Количество комментариев',
+  })
+  commentsCount: number;
 }
 
-class ArticleResponse extends IntersectionType(Article, Author) {}
+export class ArticleResponseDto extends IntersectionType(
+  Article,
+  ArticleExtend,
+) {}
 
 export class ResponseArticleDto {
   @ApiProperty()
-  article: ArticleResponse;
+  article: ArticleResponseDto;
 }

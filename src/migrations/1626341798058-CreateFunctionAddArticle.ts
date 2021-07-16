@@ -27,13 +27,13 @@ VALUES (
   author::uuid
 );
 CALL set_tag_for_article(tags, id_article);
-Return (SELECT get_article_json(id_article, author::uuid));
+Return (SELECT article_json(id_article, author::uuid));
 END;
 $$ LANGUAGE plpgsql;`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`drop FUNCTION add_article"`);
+    await queryRunner.query(`drop FUNCTION add_article`);
   }
 }

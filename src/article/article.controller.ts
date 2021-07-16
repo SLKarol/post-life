@@ -18,7 +18,6 @@ import { UserEntity } from '@app/user/user.entity';
 import { ArticleService } from './article.service';
 import { JwtAuthGuard } from '@app/user/guards/jwt.guard';
 import { BackendValidationPipe } from '@app/shared/pipes/backendValidation.pipe';
-import { ProfileService } from '@app/profile/profile.service';
 
 @Controller('articles')
 export class ArticleController {
@@ -29,7 +28,7 @@ export class ArticleController {
   @UsePipes(new BackendValidationPipe())
   @ApiBearerAuth()
   @ApiResponse({
-    description: 'Добавленная заметка',
+    description: 'Новая заметка',
     status: 200,
     type: ResponseArticleDto,
   })
@@ -41,6 +40,6 @@ export class ArticleController {
       currentUser,
       createArticleDto,
     );
-    return this.articleService.buildArticleResponse(article, currentUser.id);
+    return { article };
   }
 }
