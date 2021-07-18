@@ -5,7 +5,7 @@ import slugify from 'slugify';
 
 import { ArticleEntity } from './article.entity';
 import { UserEntity } from '@app/user/user.entity';
-import { CreateArticleDto } from './dto/createArticle.dto';
+import { ArticleDto } from './dto/createArticle.dto';
 import { WARNING_NOT_ACTIVE_USER } from '@app/constants/user';
 import { ArticleInfoDto, ResponseArticleDto } from './dto/responseArticle.dto';
 // import { ProfileService } from '@app/profile/profile.service';
@@ -19,13 +19,13 @@ export class ArticleService {
 
   async createArticle(
     currentUser: UserEntity,
-    createArticleDto: CreateArticleDto,
+    createArticleDto: ArticleDto,
   ): Promise<ArticleInfoDto> {
     // Если пользователь не активировал свою учётку, то ему не положено создавать статьи
     if (!currentUser.active) {
       throw new HttpException(WARNING_NOT_ACTIVE_USER, HttpStatus.FORBIDDEN);
     }
-    const { tagList = [], ...inputNewArticle } = createArticleDto.article;
+    const { tagList = [], ...inputNewArticle } = createArticleDto;
     const slug = this.getSlug(inputNewArticle.title);
     const newArticles = await this.articleRepository.query(
       'Select add_article($1, $2, $3, $4, $5, $6) as articles;',
@@ -68,5 +68,25 @@ export class ArticleService {
       [slug, userId],
     );
     return articles[0]['articles'] as ArticleInfoDto;
+  }
+
+  async updateArticle(
+    slug: string,
+    updateArticleDto: ArticleDto,
+    currentUserId: string,
+  ): Promise<ArticleInfoDto | null> {
+    const { tagList = [] } = updateArticleDto;
+    const newArticles = await this.articleRepository.query(
+      'Select edit_article($1, $2, $3, $4, $5, $6) as articles;',
+      [
+        slug,
+        updateArticleDto.title,
+        updateArticleDto.description,
+        updateArticleDto.body,
+        tagList,
+        currentUserId,
+      ],
+    );
+    return newArticles[0]['articles'] as ArticleInfoDto | null;
   }
 }

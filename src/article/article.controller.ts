@@ -8,10 +8,12 @@ import {
   UseGuards,
   UsePipes,
   Delete,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
 
-import { CreateArticleDto } from './dto/createArticle.dto';
+import { ArticleDto, CreateArticleDto } from './dto/createArticle.dto';
 import { ResponseArticleDto } from './dto/responseArticle.dto';
 import { User } from '@app/user/decorators/user.decorator';
 import { UserEntity } from '@app/user/user.entity';
@@ -38,7 +40,7 @@ export class ArticleController {
   ): Promise<ResponseArticleDto> {
     const article = await this.articleService.createArticle(
       currentUser,
-      createArticleDto,
+      createArticleDto.article,
     );
     return this.articleService.buildArticleResponse(article);
   }
@@ -55,6 +57,34 @@ export class ArticleController {
     @User() currentUser: UserEntity | null,
   ): Promise<ResponseArticleDto> {
     const article = await this.articleService.findBySlug(slug, currentUser);
+    return this.articleService.buildArticleResponse(article);
+  }
+
+  @Put(':slug')
+  @UseGuards(JwtAuthGuard)
+  @UsePipes(new BackendValidationPipe())
+  @ApiBody({ type: CreateArticleDto })
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    type: ResponseArticleDto,
+  })
+  async updateArticle(
+    @User('id') currentUserId: string,
+    @Param('slug') slug: string,
+    @Body('article') updateArticleDto: ArticleDto,
+  ) {
+    const article = await this.articleService.updateArticle(
+      slug,
+      updateArticleDto,
+      currentUserId,
+    );
+    if (article === null) {
+      throw new HttpException(
+        'Данная операция недоступна!',
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
     return this.articleService.buildArticleResponse(article);
   }
 }
