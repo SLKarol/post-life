@@ -19,7 +19,6 @@ export class CreateFunctionEditArticle1626619484587
 AS $BODY$
 DECLARE 
   id_article uuid;
-  can_edit boolean;
 BEGIN
 SELECT id into id_article FROM articles WHERE articles.slug=slugText AND articles."authorId"=author::uuid;
 IF NOT FOUND THEN

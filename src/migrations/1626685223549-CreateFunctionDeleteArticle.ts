@@ -15,7 +15,6 @@ export class CreateFunctionDeleteArticle1626685223549
 AS $BODY$
 DECLARE 
   id_article uuid;
-  can_delete boolean;
 BEGIN
 SELECT id INTO id_article FROM articles WHERE articles.slug=slugText AND articles."authorId"=author::uuid;
 IF NOT FOUND THEN
