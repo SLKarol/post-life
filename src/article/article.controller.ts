@@ -109,4 +109,40 @@ export class ArticleController {
   ): Promise<ResponseMultipleArticles> {
     return await this.articleService.findAll(currentUser, query);
   }
+
+  @Post(':slug/favorite')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    type: ResponseArticleDto,
+  })
+  async addArticleToFavorites(
+    @User('id') currentUserId: string,
+    @Param('slug') slug: string,
+  ): Promise<ResponseArticleDto> {
+    const article = await this.articleService.addArticleToFavorites(
+      slug,
+      currentUserId,
+    );
+    return this.articleService.buildArticleResponse(article);
+  }
+
+  @Delete(':slug/favorite')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    type: ResponseArticleDto,
+  })
+  async deleteArticleFromFavorites(
+    @User('id') currentUserId: string,
+    @Param('slug') slug: string,
+  ): Promise<ResponseArticleDto> {
+    const article = await this.articleService.deleteArticleFromFavorites(
+      slug,
+      currentUserId,
+    );
+    return this.articleService.buildArticleResponse(article);
+  }
 }

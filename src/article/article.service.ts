@@ -147,7 +147,6 @@ LIMIT 1
     }
 
     // поиск по избранному от юзера
-    //! Проверить
     if (query.favorited) {
       queryBuilder.andWhere(
         `articles.id IN (
@@ -177,8 +176,29 @@ WHERE users.id=users_favorites_articles."usersId" AND users.username=:favorited
     const listArticles = await queryBuilder.getRawMany<ResponseArticleDto>();
     // Приведение записей к заданному типу
     const articles = listArticles.map((a) => a.article);
-    console.log(queryBuilder.getQuery());
 
     return { articles, articlesCount };
+  }
+
+  async addArticleToFavorites(
+    slug: string,
+    currentUserId: string,
+  ): Promise<ArticleInfoDto> {
+    const newArticles = await this.articleRepository.query(
+      'Select add_article_to_favorites($1, $2) as articles;',
+      [slug, currentUserId],
+    );
+    return newArticles[0]['articles'] as ArticleInfoDto | null;
+  }
+
+  async deleteArticleFromFavorites(
+    slug: string,
+    currentUserId: string,
+  ): Promise<ArticleInfoDto> {
+    const newArticles = await this.articleRepository.query(
+      'Select delete_article_from_favorites($1, $2) as articles;',
+      [slug, currentUserId],
+    );
+    return newArticles[0]['articles'] as ArticleInfoDto;
   }
 }
