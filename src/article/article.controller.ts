@@ -79,12 +79,6 @@ export class ArticleController {
       updateArticleDto,
       currentUserId,
     );
-    if (article === null) {
-      throw new HttpException(
-        'Данная операция недоступна!',
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
     return this.articleService.buildArticleResponse(article);
   }
 

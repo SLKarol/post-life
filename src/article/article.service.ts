@@ -75,18 +75,23 @@ export class ArticleService {
     currentUserId: string,
   ): Promise<ArticleInfoDto | null> {
     const { tagList = [] } = updateArticleDto;
-    const newArticles = await this.articleRepository.query(
-      'Select edit_article($1, $2, $3, $4, $5, $6) as articles;',
-      [
-        slug,
-        updateArticleDto.title,
-        updateArticleDto.description,
-        updateArticleDto.body,
-        tagList,
-        currentUserId,
-      ],
-    );
-    return newArticles[0]['articles'] as ArticleInfoDto | null;
+    try {
+      const newArticles = await this.articleRepository.query(
+        'Select edit_article($1, $2, $3, $4, $5, $6) as articles;',
+        [
+          slug,
+          updateArticleDto.title,
+          updateArticleDto.description,
+          updateArticleDto.body,
+          tagList,
+          currentUserId,
+        ],
+      );
+      return newArticles[0]['articles'] as ArticleInfoDto | null;
+    } catch (e) {
+      const { message } = e;
+      throw new HttpException(message || e, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
   }
 
   async deleteArticle(slug: string, currentUserId: string): Promise<boolean> {
