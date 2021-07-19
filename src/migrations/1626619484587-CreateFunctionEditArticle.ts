@@ -21,16 +21,14 @@ DECLARE
   id_article uuid;
   can_edit boolean;
 BEGIN
-select id into id_article from articles WHERE articles.slug=slugText;
-SELECT can_work_this_article(id_article, author::uuid) into can_edit;
-IF can_edit=true THEN
+SELECT id into id_article FROM articles WHERE articles.slug=slugText AND articles."authorId"=author::uuid;
+IF NOT FOUND THEN
+	RAISE EXCEPTION 'Запись % невозможно редактировать',slugText;
+END IF;
   UPDATE articles SET title=titleText, description=descriptionText, body=bodyText
     WHERE id=id_article;
   CALL set_tag_for_article(tags, id_article);
   Return (SELECT article_json(id_article, author::uuid) as articles);
-ELSE
-  RETURN null;
-END IF;
 END;
 $BODY$;`,
     );
