@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository, InjectConnection } from '@nestjs/typeorm';
-import { Connection, DeleteResult, Repository } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import slugify from 'slugify';
 
 import { ArticleEntity } from './article.entity';
@@ -8,13 +8,12 @@ import { UserEntity } from '@app/user/user.entity';
 import { ArticleDto } from './dto/createArticle.dto';
 import { WARNING_NOT_ACTIVE_USER } from '@app/constants/user';
 import { ArticleInfoDto, ResponseArticleDto } from './dto/responseArticle.dto';
-// import { ProfileService } from '@app/profile/profile.service';
 
 @Injectable()
 export class ArticleService {
   constructor(
     @InjectRepository(ArticleEntity)
-    private readonly articleRepository: Repository<ArticleEntity>, // private readonly profileService: ProfileService,
+    private readonly articleRepository: Repository<ArticleEntity>,
   ) {}
 
   async createArticle(
@@ -88,5 +87,18 @@ export class ArticleService {
       ],
     );
     return newArticles[0]['articles'] as ArticleInfoDto | null;
+  }
+
+  async deleteArticle(slug: string, currentUserId: string): Promise<boolean> {
+    try {
+      const newArticles = await this.articleRepository.query(
+        'Select delete_article($1, $2) as result;',
+        [slug, currentUserId],
+      );
+      return newArticles[0]['result'] as boolean;
+    } catch (e) {
+      const { message } = e;
+      throw new HttpException(message || e, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
   }
 }

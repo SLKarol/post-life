@@ -73,7 +73,7 @@ export class ArticleController {
     @User('id') currentUserId: string,
     @Param('slug') slug: string,
     @Body('article') updateArticleDto: ArticleDto,
-  ) {
+  ): Promise<ResponseArticleDto> {
     const article = await this.articleService.updateArticle(
       slug,
       updateArticleDto,
@@ -86,5 +86,19 @@ export class ArticleController {
       );
     }
     return this.articleService.buildArticleResponse(article);
+  }
+
+  @Delete(':slug')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiResponse({
+    status: 200,
+    type: Boolean,
+  })
+  async deleteArticle(
+    @User('id') currentUserId: string,
+    @Param('slug') slug: string,
+  ): Promise<boolean> {
+    return await this.articleService.deleteArticle(slug, currentUserId);
   }
 }
