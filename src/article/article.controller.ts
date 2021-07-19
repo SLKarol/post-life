@@ -8,8 +8,7 @@ import {
   UseGuards,
   UsePipes,
   Delete,
-  HttpException,
-  HttpStatus,
+  Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiResponse } from '@nestjs/swagger';
 
@@ -20,6 +19,8 @@ import { UserEntity } from '@app/user/user.entity';
 import { ArticleService } from './article.service';
 import { JwtAuthGuard, AllowNullUserGuard } from '@app/user/guards/jwt.guard';
 import { BackendValidationPipe } from '@app/shared/pipes/backendValidation.pipe';
+import { ResponseMultipleArticles } from './dto/responseMultipleArticles.dto';
+import { QueryListParams } from './dto/queryListParams.dto';
 
 @Controller('articles')
 export class ArticleController {
@@ -94,5 +95,18 @@ export class ArticleController {
     @Param('slug') slug: string,
   ): Promise<boolean> {
     return await this.articleService.deleteArticle(slug, currentUserId);
+  }
+
+  @Get()
+  @UseGuards(AllowNullUserGuard)
+  @ApiResponse({
+    status: 200,
+    type: ResponseMultipleArticles,
+  })
+  async findAll(
+    @User() currentUser: UserEntity | null,
+    @Query() query: QueryListParams,
+  ): Promise<ResponseMultipleArticles> {
+    return await this.articleService.findAll(currentUser, query);
   }
 }

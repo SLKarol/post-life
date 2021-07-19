@@ -1,0 +1,27 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+export class QueryListParams {
+  @ApiProperty({
+    required: false,
+    description: 'Тэг',
+  })
+  tag?: string;
+
+  @ApiProperty({
+    type: Number,
+    description: 'Записей на страницу',
+  })
+  limit?: number;
+
+  @ApiProperty({
+    type: Number,
+    description: 'Сколько строк пропустить вначале',
+  })
+  offset?: number;
+
+  @ApiProperty({ required: false, description: 'Ник автора' })
+  author?: string;
+
+  @ApiProperty({ required: false, description: 'Избранное у пользователя ...' })
+  favorited?: string;
+}

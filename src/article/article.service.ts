@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, getRepository } from 'typeorm';
 import slugify from 'slugify';
 
 import { ArticleEntity } from './article.entity';
@@ -8,6 +8,8 @@ import { UserEntity } from '@app/user/user.entity';
 import { ArticleDto } from './dto/createArticle.dto';
 import { WARNING_NOT_ACTIVE_USER } from '@app/constants/user';
 import { ArticleInfoDto, ResponseArticleDto } from './dto/responseArticle.dto';
+import { ResponseMultipleArticles } from './dto/responseMultipleArticles.dto';
+import { QueryListParams } from './dto/queryListParams.dto';
 
 @Injectable()
 export class ArticleService {
@@ -105,5 +107,78 @@ export class ArticleService {
       const { message } = e;
       throw new HttpException(message || e, HttpStatus.UNPROCESSABLE_ENTITY);
     }
+  }
+
+  async findAll(
+    user: UserEntity | null,
+    query: QueryListParams,
+  ): Promise<ResponseMultipleArticles> {
+    const queryBuilder = getRepository(ArticleEntity)
+      .createQueryBuilder('articles')
+      .select('article_json(articles.id, :user)', 'article');
+    // Параметр к запросу
+    queryBuilder.setParameter('user', user ? user.id : null);
+
+    // Обработка фильтров
+    if (query.tag) {
+      queryBuilder.andWhere(
+        `articles.id IN (
+SELECT "articlesId" FROM tags_in_articles_articles, tags 
+WHERE tags_in_articles_articles."tagsId"=tags.id AND LOWER(tags.name)=:tag
+)`,
+        {
+          tag: query.tag.toLowerCase(),
+        },
+      );
+    }
+
+    // Поиск по автору
+    if (query.author) {
+      queryBuilder.andWhere(
+        `articles."authorId" = (
+SELECT id FROM users
+WHERE users.username=:author
+LIMIT 1
+)`,
+        {
+          author: query.author,
+        },
+      );
+    }
+
+    // поиск по избранному от юзера
+    //! Проверить
+    if (query.favorited) {
+      queryBuilder.andWhere(
+        `articles.id IN (
+SELECT users_favorites_articles."articlesId"
+FROM users_favorites_articles, users
+WHERE users.id=users_favorites_articles."usersId" AND users.username=:favorited
+)`,
+        {
+          favorited: query.favorited,
+        },
+      );
+    }
+
+    // Сортировка
+    queryBuilder.orderBy('articles.createdAt', 'DESC');
+    // Получить общее к-во записей
+    const articlesCount = await queryBuilder.getCount();
+    // Постраничный запрос
+    if (query.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    if (query.offset) {
+      queryBuilder.offset(query.offset);
+    }
+    // Получить список записей
+    const listArticles = await queryBuilder.getRawMany<ResponseArticleDto>();
+    // Приведение записей к заданному типу
+    const articles = listArticles.map((a) => a.article);
+    console.log(queryBuilder.getQuery());
+
+    return { articles, articlesCount };
   }
 }

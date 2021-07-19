@@ -22,6 +22,9 @@ class ArticleExtend {
     description: 'Количество комментариев',
   })
   commentsCount: number;
+
+  @ApiProperty({ description: 'username, у которого искать избранное' })
+  favorited: boolean;
 }
 
 export class ArticleInfoDto extends IntersectionType(
