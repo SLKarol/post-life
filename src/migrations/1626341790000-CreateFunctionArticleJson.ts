@@ -71,7 +71,7 @@ from (
     WHERE id = articleId
   ) artcl
 $BODY$;
-COMMENT ON FUNCTION public.get_article_json(uuid, uuid)
+COMMENT ON FUNCTION get_article_json(uuid, uuid)
   IS 'Получает JSON статьи. Статья получается по ID';`,
     );
   }
