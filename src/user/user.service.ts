@@ -9,7 +9,6 @@ import { compare, genSalt, hash } from 'bcrypt';
 import { UserDto } from './dto/user.dto';
 import { LoginUserDto } from './dto/loginUser.dto';
 import { ResponseUserDto } from './dto/responseUser.dto';
-import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
 
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
@@ -116,15 +115,6 @@ export class UserService {
       );
     }
     return user;
-  }
-
-  buildListUserResponse(users: UserEntity[]): ListUsersResponseDto {
-    return {
-      users: users.map((user) => {
-        const { bio, image, username, active } = user;
-        return { bio, image, username, active };
-      }),
-    };
   }
 
   async findUserById(id: string) {

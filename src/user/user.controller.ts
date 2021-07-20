@@ -29,7 +29,6 @@ import { MainUserDto } from './dto/user.dto';
 import { LoginUserDto, MainLoginDto } from './dto/loginUser.dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { User } from './decorators/user.decorator';
-import { ListUsersResponseDto } from './dto/listUsersResponse.dto';
 import { MainPatchUserDto, PatchUserDto } from './dto/patchUser.dto';
 import { CloudinaryService } from '@app/cloudinary/cloudinary.service';
 import { AvatarDto } from './dto/avatar.dto';
@@ -67,17 +66,6 @@ export class UserController {
   async login(@Body('user') loginDto: LoginUserDto): Promise<ResponseUserDto> {
     const user = await this.userService.login(loginDto);
     return await this.userService.buildUserResponse(user);
-  }
-
-  @Get('user')
-  @ApiResponse({
-    description: 'Список пользователей',
-    status: 200,
-    type: ListUsersResponseDto,
-  })
-  async findAll(): Promise<ListUsersResponseDto> {
-    const users = await this.userService.findAll();
-    return await this.userService.buildListUserResponse(users);
   }
 
   @Get('user')
