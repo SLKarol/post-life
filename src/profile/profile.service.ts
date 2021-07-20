@@ -3,39 +3,59 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { UserEntity } from '@app/user/user.entity';
-import { FollowEntity } from './follow.entity';
-import { ProfileDto } from './dto/profile.dto';
+import { ProfileDto, ProfileResponseDto } from './dto/profile.dto';
 
 @Injectable()
 export class ProfileService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-
-    @InjectRepository(FollowEntity)
-    private readonly followRepository: Repository<FollowEntity>,
   ) {}
 
   async getProfile(
     currentUserId: string,
     profileUsername: string,
   ): Promise<ProfileDto> {
-    const user = await this.userRepository.findOne({
-      username: profileUsername,
-    });
+    const profiles = await this.userRepository.query(
+      'Select get_profile_by_username($1, $2) as profile;',
+      [currentUserId, profileUsername],
+    );
+    return profiles[0]['profile'] as ProfileDto;
+  }
 
-    if (!user) {
-      throw new HttpException('Profile does not exist', HttpStatus.NOT_FOUND);
+  buildProfileResponse(profile: ProfileDto): ProfileResponseDto {
+    return { profile };
+  }
+
+  async followProfile(
+    currentUserId: string,
+    profileUsername: string,
+  ): Promise<ProfileDto> {
+    try {
+      const profiles = await this.userRepository.query(
+        'Select follow_profile($1, $2) as profile;',
+        [currentUserId, profileUsername],
+      );
+      return profiles[0]['profile'] as ProfileDto;
+    } catch (e) {
+      const { message } = e;
+      throw new HttpException(message || e, HttpStatus.UNPROCESSABLE_ENTITY);
     }
+  }
 
-    const follow = await this.followRepository.findOne({
-      followerId: currentUserId,
-      followingId: user.id,
-    });
-    delete user.password;
-    delete user.email;
-    delete user.id;
-
-    return { ...user, following: Boolean(follow) };
+  async unfollowProfile(
+    currentUserId: string,
+    profileUsername: string,
+  ): Promise<ProfileDto> {
+    try {
+      const profiles = await this.userRepository.query(
+        'Select unfollow_profile($1, $2) as profile;',
+        [currentUserId, profileUsername],
+      );
+      return profiles[0]['profile'] as ProfileDto;
+    } catch (e) {
+      const { message } = e;
+      throw new HttpException(message || e, HttpStatus.UNPROCESSABLE_ENTITY);
+    }
   }
 }
