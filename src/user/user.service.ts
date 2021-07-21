@@ -12,6 +12,7 @@ import { ResponseUserDto } from './dto/responseUser.dto';
 
 import { Repository } from 'typeorm';
 import { UserEntity } from './user.entity';
+import { PutUserDto } from './dto/patchUser.dto';
 
 @Injectable()
 export class UserService {
@@ -123,10 +124,15 @@ export class UserService {
 
   async updateUser(
     userId: string,
-    updateUserDto: UserDto,
+    updateUserDto: PutUserDto,
   ): Promise<UserEntity> {
     const user = await this.findUserById(userId);
     Object.assign(user, updateUserDto);
+    if ('password' in updateUserDto) {
+      const salt = await genSalt(10);
+      const hashPassword = await hash(updateUserDto.password, salt);
+      user.password = hashPassword;
+    }
     return await this.userRepository.save(user);
   }
 

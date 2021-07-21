@@ -18,21 +18,18 @@ import {
   ApiBody,
   ApiConsumes,
   ApiResponse,
-  PartialType,
 } from '@nestjs/swagger';
 import { Express } from 'express';
 
 import { ResponseUserDto } from './dto/responseUser.dto';
 import { BackendValidationPipe } from '@app/shared/pipes/backendValidation.pipe';
 import { UserService } from './user.service';
-import { MainUserDto } from './dto/user.dto';
+import { MainUserDto, UserDto } from './dto/user.dto';
 import { LoginUserDto, MainLoginDto } from './dto/loginUser.dto';
 import { JwtAuthGuard } from './guards/jwt.guard';
 import { User } from './decorators/user.decorator';
-import { MainPatchUserDto, PatchUserDto } from './dto/patchUser.dto';
+import { MainPutUserDto, PatchUserDto, PutUserDto } from './dto/patchUser.dto';
 import { CloudinaryService } from '@app/cloudinary/cloudinary.service';
-import { AvatarDto } from './dto/avatar.dto';
-import { UploadFileDto } from '@app/types/uploadFile.interface';
 
 @Controller()
 export class UserController {
@@ -49,10 +46,10 @@ export class UserController {
     status: 200,
     type: Boolean,
   })
-  async createUser(@Body() formData: MainUserDto): Promise<boolean> {
-    const user = await this.userService.createUser(formData.user);
+  async createUser(@Body('user') formData: UserDto): Promise<any> {
+    const user = await this.userService.createUser(formData);
     await this.userService.sendConfirmMail(user);
-    return true;
+    return formData;
   }
 
   @Post('users/login')
@@ -86,7 +83,7 @@ export class UserController {
   @Put('user')
   @UsePipes(new BackendValidationPipe())
   @UseGuards(JwtAuthGuard)
-  @ApiBody({ type: MainUserDto })
+  @ApiBody({ type: MainPutUserDto })
   @ApiResponse({
     description: 'Обновлённый пользователь',
     status: 200,
@@ -95,11 +92,11 @@ export class UserController {
   @ApiBearerAuth()
   async updateCurrentUser(
     @User('id') currentUserId: string,
-    @Body() updateUserDto: MainUserDto,
+    @Body('user') updateUserDto: PutUserDto,
   ): Promise<ResponseUserDto> {
     const user = await this.userService.updateUser(
       currentUserId,
-      updateUserDto.user,
+      updateUserDto,
     );
     return this.userService.buildUserResponse(user);
   }
@@ -132,13 +129,14 @@ export class UserController {
   }
 
   /**
-   * Для смены пароля
-   * (аватарка в будущем)
+   * Для смены пароля и/или загрузки аватарки
    */
   @Patch('user')
   @UsePipes(new BackendValidationPipe())
+  @UseInterceptors(FileInterceptor('image'))
   @UseGuards(JwtAuthGuard)
-  @ApiBody({ type: MainPatchUserDto })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ type: PatchUserDto })
   @ApiResponse({
     description: 'Пользователь',
     status: 200,
@@ -147,41 +145,27 @@ export class UserController {
   @ApiBearerAuth()
   async patchUser(
     @User('id') currentUserId: string,
-    @Body('user') patchUserDto: PatchUserDto,
+    @Body() patchUserDto: PatchUserDto,
+    @UploadedFile() file: Express.Multer.File,
   ): Promise<ResponseUserDto> {
     if (!currentUserId) return null;
-    const { password } = patchUserDto;
     let user = await this.userService.findUserById(currentUserId);
-    if (password) {
-      user = await this.userService.savePassword(user, password);
+    // Если вызывает метод для смены аватарки
+    if (file) {
+      const responseUpload = await this.cloudinaryService.uploadImage({
+        file,
+        type: 'avatar',
+      });
+      const { url } = responseUpload;
+      user = await this.userService.setAvatar(user, url);
     }
-    return await this.userService.buildUserResponse(user);
-  }
-
-  @Post('user/avatar')
-  @UseInterceptors(FileInterceptor('file'))
-  @UseGuards(JwtAuthGuard)
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    description: 'Аватар, загруженный с компа (файл то есть)',
-    type: PartialType(AvatarDto),
-  })
-  @ApiResponse({
-    status: 200,
-    type: UploadFileDto,
-  })
-  @ApiBearerAuth()
-  async uploadAvatar(
-    @UploadedFile() file: Express.Multer.File,
-    @User('id') currentUserId: string,
-  ): Promise<ResponseUserDto> {
-    const responseUpload = await this.cloudinaryService.uploadImage({
-      file,
-      type: 'avatar',
-    });
-    const { url } = responseUpload;
-    let user = await this.userService.findUserById(currentUserId);
-    user = await this.userService.setAvatar(user, url);
+    // Если вызывает метод для смены пароля
+    if (patchUserDto) {
+      const { password } = patchUserDto;
+      if (password) {
+        user = await this.userService.savePassword(user, password);
+      }
+    }
     return await this.userService.buildUserResponse(user);
   }
 }

@@ -1,10 +1,14 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
+import { PartialType, PickType, ApiProperty } from '@nestjs/swagger';
 
 import { UserDto } from './user.dto';
 
-export class PatchUserDto extends PartialType(UserDto) {}
+export class PatchUserDto extends PartialType(
+  PickType(UserDto, ['password', 'image'] as const),
+) {}
 
-export class MainPatchUserDto {
-  @ApiProperty({ description: 'Данные для обновления юзера' })
-  readonly user: PatchUserDto;
+export class PutUserDto extends PartialType(UserDto) {}
+
+export class MainPutUserDto {
+  @ApiProperty()
+  readonly user: PutUserDto;
 }

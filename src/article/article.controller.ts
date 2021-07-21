@@ -40,11 +40,11 @@ export class ArticleController {
   })
   async create(
     @User() currentUser: UserEntity,
-    @Body() createArticleDto: CreateArticleDto,
+    @Body('article') articleDto: ArticleDto,
   ): Promise<ResponseArticleDto> {
     const article = await this.articleService.createArticle(
       currentUser,
-      createArticleDto.article,
+      articleDto,
     );
     return this.articleService.buildArticleResponse(article);
   }
