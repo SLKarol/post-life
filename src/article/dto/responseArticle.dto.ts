@@ -25,6 +25,12 @@ class ArticleExtend {
 
   @ApiProperty({ description: 'username, у которого искать избранное' })
   favorited: boolean;
+
+  @ApiProperty({
+    description: 'Список используемых тэгов в заметке',
+    type: [String],
+  })
+  tagList: string[];
 }
 
 export class ArticleInfoDto extends IntersectionType(

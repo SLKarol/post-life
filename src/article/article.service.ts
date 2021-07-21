@@ -9,7 +9,10 @@ import { ArticleDto } from './dto/createArticle.dto';
 import { WARNING_NOT_ACTIVE_USER } from '@app/constants/user';
 import { ArticleInfoDto, ResponseArticleDto } from './dto/responseArticle.dto';
 import { ResponseMultipleArticles } from './dto/responseMultipleArticles.dto';
-import { QueryListParams } from './dto/queryListParams.dto';
+import {
+  QueryListFeedsParams,
+  QueryListParams,
+} from './dto/queryListParams.dto';
 
 @Injectable()
 export class ArticleService {
@@ -200,5 +203,42 @@ WHERE users.id=users_favorites_articles."usersId" AND users.username=:favorited
       [slug, currentUserId],
     );
     return newArticles[0]['articles'] as ArticleInfoDto;
+  }
+
+  async getFeed(
+    currentUserId: string,
+    query: QueryListFeedsParams,
+  ): Promise<ResponseMultipleArticles> {
+    const queryBuilder = getRepository(ArticleEntity)
+      .createQueryBuilder('articles')
+      .select('article_json(articles.id, :user)', 'article');
+    // Поиск по ленте юзера
+    queryBuilder.innerJoin(
+      'follows',
+      'follows',
+      'follows."followingId"=articles."authorId" AND follows."followerId"=:user',
+      { follower: currentUserId },
+    );
+    // Параметр к запросу
+    queryBuilder.setParameter('user', currentUserId);
+
+    // Сортировка
+    queryBuilder.orderBy('articles.createdAt', 'DESC');
+    // Получить общее к-во записей
+    const articlesCount = await queryBuilder.getCount();
+    // Постраничный запрос
+    if (query.limit) {
+      queryBuilder.limit(query.limit);
+    }
+
+    if (query.offset) {
+      queryBuilder.offset(query.offset);
+    }
+    // Получить список записей
+    const listArticles = await queryBuilder.getRawMany<ResponseArticleDto>();
+    // Приведение записей к заданному типу
+    const articles = listArticles.map((a) => a.article);
+    console.log(queryBuilder.getQuery());
+    return { articles, articlesCount };
   }
 }

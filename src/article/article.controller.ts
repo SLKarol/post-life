@@ -20,7 +20,10 @@ import { ArticleService } from './article.service';
 import { JwtAuthGuard, AllowNullUserGuard } from '@app/user/guards/jwt.guard';
 import { BackendValidationPipe } from '@app/shared/pipes/backendValidation.pipe';
 import { ResponseMultipleArticles } from './dto/responseMultipleArticles.dto';
-import { QueryListParams } from './dto/queryListParams.dto';
+import {
+  QueryListFeedsParams,
+  QueryListParams,
+} from './dto/queryListParams.dto';
 
 @Controller('articles')
 export class ArticleController {
@@ -44,6 +47,19 @@ export class ArticleController {
       createArticleDto.article,
     );
     return this.articleService.buildArticleResponse(article);
+  }
+
+  @Get('feed')
+  @UseGuards(JwtAuthGuard)
+  @ApiResponse({
+    status: 200,
+    type: ResponseMultipleArticles,
+  })
+  async getFeed(
+    @User('id') currentUserId: string,
+    @Query() query: QueryListFeedsParams,
+  ): Promise<ResponseMultipleArticles> {
+    return await this.articleService.getFeed(currentUserId, query);
   }
 
   @Get(':slug')

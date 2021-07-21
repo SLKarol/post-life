@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PickType } from '@nestjs/swagger';
 
 export class QueryListParams {
   @ApiProperty({
@@ -25,3 +25,8 @@ export class QueryListParams {
   @ApiProperty({ required: false, description: 'Избранное у пользователя ...' })
   favorited?: string;
 }
+
+export class QueryListFeedsParams extends PickType(QueryListParams, [
+  'limit',
+  'offset',
+] as const) {}
