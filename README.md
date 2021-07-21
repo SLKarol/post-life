@@ -75,7 +75,7 @@ $ npm run start:prod
 - При регистрации отправляется почта на адрес нового пользователя с просьбой подтвердить авторизацию _(См. выше)_
 
 - В [/articles/:slug](https://github.com/gothinkster/realworld/tree/master/api#get-article) а точнее - в [Single Article](https://github.com/gothinkster/realworld/tree/master/api#single-article) добавил количество комментариев к заметке.
-- Добавлен метод PATCH для замены пароля.
+- Добавлен метод `PATCH /user` для **загрузки** аватарки и/или смены пароля.
 
 ## TODO
 
