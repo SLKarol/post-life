@@ -11,7 +11,7 @@ import { hash, genSalt } from 'bcrypt';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { ArticleEntity } from '@app/article/article.entity';
-import { CommentEntity } from '@app/comment/comment.entity';
+import { CommentEntity } from '@app/article/comment.entity';
 
 @Entity({ name: 'users' })
 export class UserEntity {
@@ -20,7 +20,7 @@ export class UserEntity {
   id: string;
 
   @Column({ unique: true })
-  @ApiProperty({ description: 'Ник или ФИО или псеводим' })
+  @ApiProperty({ description: 'Ник или ФИО или псевдоним' })
   username: string;
 
   @Column({ unique: true })

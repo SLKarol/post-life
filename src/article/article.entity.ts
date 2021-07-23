@@ -9,7 +9,7 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 import { UserEntity } from '@app/user/user.entity';
-import { CommentEntity } from '@app/comment/comment.entity';
+import { CommentEntity } from '@app/article/comment.entity';
 
 @Entity({ name: 'articles' })
 export class ArticleEntity {
