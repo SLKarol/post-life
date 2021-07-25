@@ -5,7 +5,7 @@
 -- Dumped from database version 13.3
 -- Dumped by pg_dump version 13.3
 
--- Started on 2021-07-20 10:44:46
+-- Started on 2021-07-25 12:00:27
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -27,7 +27,7 @@ CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
 
 
 --
--- TOC entry 3181 (class 0 OID 0)
+-- TOC entry 3194 (class 0 OID 0)
 -- Dependencies: 3
 -- Name: EXTENSION citext; Type: COMMENT; Schema: -; Owner: 
 --
@@ -44,7 +44,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 
 
 --
--- TOC entry 3182 (class 0 OID 0)
+-- TOC entry 3195 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION "uuid-ossp"; Type: COMMENT; Schema: -; Owner: 
 --
@@ -80,7 +80,7 @@ $$;
 ALTER FUNCTION public.add_article(slug text, title text, description text, body text, author text, tags text[]) OWNER TO postgres;
 
 --
--- TOC entry 285 (class 1255 OID 33630)
+-- TOC entry 287 (class 1255 OID 33630)
 -- Name: add_article_to_favorites(text, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -109,7 +109,33 @@ $$;
 ALTER FUNCTION public.add_article_to_favorites(slugtext text, user_id text) OWNER TO postgres;
 
 --
--- TOC entry 282 (class 1255 OID 33616)
+-- TOC entry 291 (class 1255 OID 33641)
+-- Name: add_comment(uuid, text, text, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.add_comment(id_user uuid, slug_text text, body text, id_parent uuid DEFAULT NULL::uuid) RETURNS json
+    LANGUAGE plpgsql
+    AS $$
+DECLARE article_id uuid;
+comment_id uuid;
+BEGIN
+  SELECT ID INTO article_id FROM articles
+    WHERE slug = slug_text;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Article does not find';
+  END IF;
+  INSERT INTO comments ("id_parent", "body", "authorId", "articleId")
+  VALUES (id_parent, body, id_user, article_id)
+  RETURNING id INTO comment_id;
+  RETURN (SELECT comment_json(comment_id, id_user));	
+END;
+$$;
+
+
+ALTER FUNCTION public.add_comment(id_user uuid, slug_text text, body text, id_parent uuid) OWNER TO postgres;
+
+--
+-- TOC entry 283 (class 1255 OID 33616)
 -- Name: article_by_slug(text, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -127,7 +153,7 @@ $$;
 ALTER FUNCTION public.article_by_slug(slugtext text, iduser text) OWNER TO postgres;
 
 --
--- TOC entry 280 (class 1255 OID 25426)
+-- TOC entry 292 (class 1255 OID 25426)
 -- Name: article_json(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -143,16 +169,11 @@ from (
       "createdAt",
       "updatedAt",
       (
-        select array_to_json(array_agg(to_jsonb(tag)))
-        from (
-            select id,
-              name
-            from tags,
-              tags_in_articles_articles
-            where tags_in_articles_articles."articlesId" = articles.id
-              AND tags_in_articles_articles."tagsId" = tags.id
-            order by tags.name
-          ) tag
+        select
+        array_to_json(array_agg(to_json(tags.name))) as tagList
+        from tags,tags_in_articles_articles
+        where tags_in_articles_articles."articlesId" = articles.id
+          AND tags_in_articles_articles."tagsId" = tags.id
       ) AS "tagList",
       exists(
         SELECT 1
@@ -188,13 +209,49 @@ from (
       ) AS author
     from articles
     WHERE id = articleId
-  ) artcl $$;
+  ) artcl
+$$;
 
 
 ALTER FUNCTION public.article_json(articleid uuid, userid uuid) OWNER TO postgres;
 
 --
--- TOC entry 284 (class 1255 OID 33627)
+-- TOC entry 293 (class 1255 OID 33643)
+-- Name: comment_json(uuid, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.comment_json(comment_id uuid, user_id uuid) RETURNS json
+    LANGUAGE sql
+    AS $$
+  select to_jsonb(commnt)
+  from (
+      select id, "createdAt", "updatedAt", body, id_parent as "idParent",
+        (
+          SELECT to_jsonb(a)
+          FROM (
+              SELECT username,
+                bio,
+                image,
+                EXISTS(
+                  SELECT 1
+                  FROM follows
+                  WHERE "followerId" = user_id
+                    AND "followingId" = comments."authorId"
+                ) AS following
+              FROM users
+              WHERE users.id = comments."authorId"
+            ) a
+        ) AS author
+      from comments
+      WHERE id = comment_id
+    ) commnt
+  $$;
+
+
+ALTER FUNCTION public.comment_json(comment_id uuid, user_id uuid) OWNER TO postgres;
+
+--
+-- TOC entry 285 (class 1255 OID 33627)
 -- Name: delete_article(text, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -218,7 +275,7 @@ $$;
 ALTER FUNCTION public.delete_article(slugtext text, author text) OWNER TO postgres;
 
 --
--- TOC entry 286 (class 1255 OID 33633)
+-- TOC entry 290 (class 1255 OID 33633)
 -- Name: delete_article_from_favorites(text, text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -247,7 +304,7 @@ $$;
 ALTER FUNCTION public.delete_article_from_favorites(slugtext text, user_id text) OWNER TO postgres;
 
 --
--- TOC entry 283 (class 1255 OID 33625)
+-- TOC entry 284 (class 1255 OID 33625)
 -- Name: edit_article(text, text, text, text, text[], text); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -273,7 +330,40 @@ $$;
 ALTER FUNCTION public.edit_article(slugtext text, titletext text, descriptiontext text, bodytext text, tags text[], author text) OWNER TO postgres;
 
 --
--- TOC entry 278 (class 1255 OID 25420)
+-- TOC entry 289 (class 1255 OID 33636)
+-- Name: follow_profile(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.follow_profile(follower uuid, user_name text) RETURNS json
+    LANGUAGE plpgsql
+    AS $$
+DECLARE user_id uuid;
+BEGIN
+  select id into user_id from users WHERE username=user_name;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Profile does not exist';
+  END IF;
+  IF follower=user_id THEN
+    RAISE EXCEPTION 'Ты не можешь следить сам за собой';
+  END IF;
+  IF NOT EXISTS (
+  SELECT id FROM follows
+  WHERE follows."followerId"=follower
+    AND follows."followingId"=user_id
+  ) THEN
+    INSERT INTO follows ("followerId", "followingId")
+    VALUES (follower, user_id);
+  END IF;
+    
+  Return (SELECT get_profile_by_username(follower, user_name));
+END;
+$$;
+
+
+ALTER FUNCTION public.follow_profile(follower uuid, user_name text) OWNER TO postgres;
+
+--
+-- TOC entry 279 (class 1255 OID 25420)
 -- Name: get_articles_json(character varying, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -321,7 +411,92 @@ $$;
 ALTER FUNCTION public.get_articles_json(userid character varying, lmt integer, offst integer) OWNER TO postgres;
 
 --
--- TOC entry 277 (class 1255 OID 17210)
+-- TOC entry 294 (class 1255 OID 41830)
+-- Name: get_comments_json(text, uuid); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_comments_json(slugtext text, userid uuid) RETURNS json
+    LANGUAGE plpgsql
+    AS $$
+DECLARE article_id uuid;
+BEGIN
+  select id into article_id from articles WHERE slug=slugtext;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Article does not exist';
+  END IF;	
+  Return (	
+    Select to_jsonb(res) AS res FROM (
+    Select (select array_to_json(array_agg(to_jsonb(a4))) FROM (
+      Select id, id_parent, body, "createdAt", "updatedAt",
+      (
+        SELECT to_jsonb(a)
+        FROM (
+          SELECT username,
+          bio,
+          image,
+          EXISTS(
+            SELECT 1 FROM follows
+            WHERE "followerId" = userid AND "followingId" = comments_ordered."authorId"
+          ) AS following
+          FROM users
+        WHERE users.id = comments_ordered."authorId"
+            ) a
+        ) AS author
+    from comments_ordered where "articleId"=article_id
+    ) a4
+    ) as comments ) res);
+END;
+$$;
+
+
+ALTER FUNCTION public.get_comments_json(slugtext text, userid uuid) OWNER TO postgres;
+
+--
+-- TOC entry 282 (class 1255 OID 33634)
+-- Name: get_profile_by_username(text, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_profile_by_username(follower text, user_name text) RETURNS json
+    LANGUAGE plpgsql
+    AS $$
+DECLARE user_id uuid;
+BEGIN
+  select id into user_id from users WHERE username=user_name;  
+  Return (SELECT to_jsonb(usr) FROM (
+	  SELECT username, bio, image, active,
+	  	exists (SELECT id FROM follows WHERE follows."followerId"=follower::uuid AND follows."followingId"=user_id) as following
+	  FROM users WHERE id=user_id
+  ) usr);
+END;
+$$;
+
+
+ALTER FUNCTION public.get_profile_by_username(follower text, user_name text) OWNER TO postgres;
+
+--
+-- TOC entry 286 (class 1255 OID 33635)
+-- Name: get_profile_by_username(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_profile_by_username(follower uuid, user_name text) RETURNS json
+    LANGUAGE plpgsql
+    AS $$
+DECLARE user_id uuid;
+BEGIN
+  select id into user_id from users WHERE username=user_name;  
+  Return (SELECT to_jsonb(usr) FROM (
+    SELECT username, bio, image, active,
+      exists (SELECT id FROM follows WHERE follows."followerId"=follower AND follows."followingId"=user_id) as following
+    FROM users WHERE id=user_id
+  ) usr);
+END;
+$$;
+
+
+ALTER FUNCTION public.get_profile_by_username(follower uuid, user_name text) OWNER TO postgres;
+
+--
+-- TOC entry 278 (class 1255 OID 17210)
 -- Name: insert_tag(character varying); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -341,7 +516,7 @@ CREATE FUNCTION public.insert_tag(nametag character varying) RETURNS uuid
 ALTER FUNCTION public.insert_tag(nametag character varying) OWNER TO postgres;
 
 --
--- TOC entry 279 (class 1255 OID 25410)
+-- TOC entry 280 (class 1255 OID 25410)
 -- Name: set_tag_for_article(character varying[], uuid); Type: PROCEDURE; Schema: public; Owner: postgres
 --
 
@@ -365,13 +540,42 @@ $$;
 ALTER PROCEDURE public.set_tag_for_article(tags character varying[], article uuid) OWNER TO postgres;
 
 --
--- TOC entry 3183 (class 0 OID 0)
--- Dependencies: 279
+-- TOC entry 3196 (class 0 OID 0)
+-- Dependencies: 280
 -- Name: PROCEDURE set_tag_for_article(tags character varying[], article uuid); Type: COMMENT; Schema: public; Owner: postgres
 --
 
 COMMENT ON PROCEDURE public.set_tag_for_article(tags character varying[], article uuid) IS 'Установить тэги для статьи';
 
+
+--
+-- TOC entry 288 (class 1255 OID 33637)
+-- Name: unfollow_profile(uuid, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.unfollow_profile(follower uuid, user_name text) RETURNS json
+    LANGUAGE plpgsql
+    AS $$
+DECLARE user_id uuid;
+BEGIN
+  select id into user_id from users WHERE username=user_name;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Profile does not exist';
+  END IF;
+  IF follower=user_id THEN
+    RAISE EXCEPTION 'Ты не можешь следить сам за собой';
+  END IF;
+  
+  DELETE FROM follows
+  WHERE follows."followerId"=follower
+    AND follows."followingId"=user_id;
+    
+  Return (SELECT get_profile_by_username(follower, user_name));
+END;
+$$;
+
+
+ALTER FUNCTION public.unfollow_profile(follower uuid, user_name text) OWNER TO postgres;
 
 SET default_tablespace = '';
 
@@ -407,21 +611,63 @@ CREATE TABLE public.comments (
     body character varying NOT NULL,
     "createdAt" timestamp without time zone DEFAULT now() NOT NULL,
     "updatedAt" timestamp without time zone DEFAULT now() NOT NULL,
-    "authorId" uuid,
-    "articleId" uuid
+    "authorId" uuid NOT NULL,
+    "articleId" uuid NOT NULL
 );
 
 
 ALTER TABLE public.comments OWNER TO postgres;
 
 --
--- TOC entry 3184 (class 0 OID 0)
+-- TOC entry 3197 (class 0 OID 0)
 -- Dependencies: 209
 -- Name: COLUMN comments.body; Type: COMMENT; Schema: public; Owner: postgres
 --
 
 COMMENT ON COLUMN public.comments.body IS 'Текст комментария';
 
+
+--
+-- TOC entry 211 (class 1259 OID 33654)
+-- Name: comments_ordered; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.comments_ordered AS
+ WITH RECURSIVE tree AS (
+         SELECT comments.id,
+            comments.id_parent,
+            comments.body,
+            comments."createdAt",
+            comments."updatedAt",
+            comments."authorId",
+            comments."articleId",
+            (comments.id)::text AS path
+           FROM public.comments
+          WHERE (comments.id_parent IS NULL)
+        UNION
+         SELECT f1.id,
+            f1.id_parent,
+            f1.body,
+            f1."createdAt",
+            f1."updatedAt",
+            f1."authorId",
+            f1."articleId",
+            ((tree_1.path || '/'::text) || (f1.id)::text) AS path
+           FROM (tree tree_1
+             JOIN public.comments f1 ON ((f1.id_parent = tree_1.id)))
+        )
+ SELECT tree.id,
+    tree.id_parent,
+    tree.body,
+    tree."createdAt",
+    tree."updatedAt",
+    tree."authorId",
+    tree."articleId"
+   FROM tree
+  ORDER BY tree.path, tree."createdAt";
+
+
+ALTER TABLE public.comments_ordered OWNER TO postgres;
 
 --
 -- TOC entry 210 (class 1259 OID 25411)
@@ -468,7 +714,7 @@ CREATE SEQUENCE public.migrations_id_seq
 ALTER TABLE public.migrations_id_seq OWNER TO postgres;
 
 --
--- TOC entry 3185 (class 0 OID 0)
+-- TOC entry 3198 (class 0 OID 0)
 -- Dependencies: 202
 -- Name: migrations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -534,7 +780,7 @@ CREATE TABLE public.users_favorites_articles (
 ALTER TABLE public.users_favorites_articles OWNER TO postgres;
 
 --
--- TOC entry 2996 (class 2604 OID 17124)
+-- TOC entry 3007 (class 2604 OID 17124)
 -- Name: migrations id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -542,7 +788,7 @@ ALTER TABLE ONLY public.migrations ALTER COLUMN id SET DEFAULT nextval('public.m
 
 
 --
--- TOC entry 3024 (class 2606 OID 17170)
+-- TOC entry 3035 (class 2606 OID 17170)
 -- Name: articles PK_0a6e2c450d83e0b6052c2793334; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -551,7 +797,7 @@ ALTER TABLE ONLY public.articles
 
 
 --
--- TOC entry 3038 (class 2606 OID 25419)
+-- TOC entry 3049 (class 2606 OID 25419)
 -- Name: follows PK_8988f607744e16ff79da3b8a627; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -560,7 +806,7 @@ ALTER TABLE ONLY public.follows
 
 
 --
--- TOC entry 3036 (class 2606 OID 17223)
+-- TOC entry 3047 (class 2606 OID 17223)
 -- Name: comments PK_8bf68bc960f2b69e818bdb90dcb; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -569,7 +815,7 @@ ALTER TABLE ONLY public.comments
 
 
 --
--- TOC entry 3012 (class 2606 OID 17129)
+-- TOC entry 3023 (class 2606 OID 17129)
 -- Name: migrations PK_8c82d7f526340ab734260ea46be; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -578,7 +824,7 @@ ALTER TABLE ONLY public.migrations
 
 
 --
--- TOC entry 3014 (class 2606 OID 17139)
+-- TOC entry 3025 (class 2606 OID 17139)
 -- Name: users PK_a3ffb1c0c8416b9fc6f907b7433; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -587,7 +833,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3034 (class 2606 OID 17182)
+-- TOC entry 3045 (class 2606 OID 17182)
 -- Name: tags_in_articles_articles PK_a705f9719c457941ebc83199e0c; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -596,7 +842,7 @@ ALTER TABLE ONLY public.tags_in_articles_articles
 
 
 --
--- TOC entry 3030 (class 2606 OID 17175)
+-- TOC entry 3041 (class 2606 OID 17175)
 -- Name: users_favorites_articles PK_aebb5070a5fa58957adae6d78af; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -605,7 +851,7 @@ ALTER TABLE ONLY public.users_favorites_articles
 
 
 --
--- TOC entry 3020 (class 2606 OID 17155)
+-- TOC entry 3031 (class 2606 OID 17155)
 -- Name: tags PK_e7dc17249a1148a1970748eda99; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -614,7 +860,7 @@ ALTER TABLE ONLY public.tags
 
 
 --
--- TOC entry 3026 (class 2606 OID 17212)
+-- TOC entry 3037 (class 2606 OID 17212)
 -- Name: articles UQ_1123ff6815c5b8fec0ba9fec370; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -623,7 +869,7 @@ ALTER TABLE ONLY public.articles
 
 
 --
--- TOC entry 3016 (class 2606 OID 17143)
+-- TOC entry 3027 (class 2606 OID 17143)
 -- Name: users UQ_97672ac88f789774dd47f7c8be3; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -632,7 +878,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3022 (class 2606 OID 17157)
+-- TOC entry 3033 (class 2606 OID 17157)
 -- Name: tags UQ_d90243459a697eadb8ad56e9092; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -641,7 +887,7 @@ ALTER TABLE ONLY public.tags
 
 
 --
--- TOC entry 3018 (class 2606 OID 17141)
+-- TOC entry 3029 (class 2606 OID 17141)
 -- Name: users UQ_fe0bb3f6520ee0469504521e710; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -650,7 +896,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3027 (class 1259 OID 17177)
+-- TOC entry 3038 (class 1259 OID 17177)
 -- Name: IDX_61dc60abcf0035e5ce2aea013b; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -658,7 +904,7 @@ CREATE INDEX "IDX_61dc60abcf0035e5ce2aea013b" ON public.users_favorites_articles
 
 
 --
--- TOC entry 3031 (class 1259 OID 17184)
+-- TOC entry 3042 (class 1259 OID 17184)
 -- Name: IDX_644e1ee7f17bed955923c0876f; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -666,7 +912,7 @@ CREATE INDEX "IDX_644e1ee7f17bed955923c0876f" ON public.tags_in_articles_article
 
 
 --
--- TOC entry 3028 (class 1259 OID 17176)
+-- TOC entry 3039 (class 1259 OID 17176)
 -- Name: IDX_b3bc5ca3e98f5f3858dbf626ad; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -674,7 +920,7 @@ CREATE INDEX "IDX_b3bc5ca3e98f5f3858dbf626ad" ON public.users_favorites_articles
 
 
 --
--- TOC entry 3032 (class 1259 OID 17183)
+-- TOC entry 3043 (class 1259 OID 17183)
 -- Name: IDX_bd9792857d9e7fe5eb8f51a523; Type: INDEX; Schema: public; Owner: postgres
 --
 
@@ -682,7 +928,7 @@ CREATE INDEX "IDX_bd9792857d9e7fe5eb8f51a523" ON public.tags_in_articles_article
 
 
 --
--- TOC entry 3044 (class 2606 OID 17224)
+-- TOC entry 3055 (class 2606 OID 17224)
 -- Name: comments FK_4548cc4a409b8651ec75f70e280; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -691,7 +937,7 @@ ALTER TABLE ONLY public.comments
 
 
 --
--- TOC entry 3041 (class 2606 OID 17195)
+-- TOC entry 3052 (class 2606 OID 17195)
 -- Name: users_favorites_articles FK_61dc60abcf0035e5ce2aea013bc; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -700,7 +946,7 @@ ALTER TABLE ONLY public.users_favorites_articles
 
 
 --
--- TOC entry 3043 (class 2606 OID 17205)
+-- TOC entry 3054 (class 2606 OID 17205)
 -- Name: tags_in_articles_articles FK_644e1ee7f17bed955923c0876fc; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -709,7 +955,7 @@ ALTER TABLE ONLY public.tags_in_articles_articles
 
 
 --
--- TOC entry 3039 (class 2606 OID 17185)
+-- TOC entry 3050 (class 2606 OID 17185)
 -- Name: articles FK_65d9ccc1b02f4d904e90bd76a34; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -718,7 +964,7 @@ ALTER TABLE ONLY public.articles
 
 
 --
--- TOC entry 3045 (class 2606 OID 17229)
+-- TOC entry 3056 (class 2606 OID 17229)
 -- Name: comments FK_b0011304ebfcb97f597eae6c31f; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -727,7 +973,7 @@ ALTER TABLE ONLY public.comments
 
 
 --
--- TOC entry 3040 (class 2606 OID 17190)
+-- TOC entry 3051 (class 2606 OID 17190)
 -- Name: users_favorites_articles FK_b3bc5ca3e98f5f3858dbf626ad6; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -736,7 +982,7 @@ ALTER TABLE ONLY public.users_favorites_articles
 
 
 --
--- TOC entry 3042 (class 2606 OID 17200)
+-- TOC entry 3053 (class 2606 OID 17200)
 -- Name: tags_in_articles_articles FK_bd9792857d9e7fe5eb8f51a5236; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -744,7 +990,16 @@ ALTER TABLE ONLY public.tags_in_articles_articles
     ADD CONSTRAINT "FK_bd9792857d9e7fe5eb8f51a5236" FOREIGN KEY ("tagsId") REFERENCES public.tags(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
--- Completed on 2021-07-20 10:44:46
+--
+-- TOC entry 3057 (class 2606 OID 33649)
+-- Name: comments fk_tree_comments; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.comments
+    ADD CONSTRAINT fk_tree_comments FOREIGN KEY (id_parent) REFERENCES public.comments(id) ON DELETE CASCADE;
+
+
+-- Completed on 2021-07-25 12:00:27
 
 --
 -- PostgreSQL database dump complete
