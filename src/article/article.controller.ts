@@ -24,6 +24,9 @@ import {
   QueryListFeedsParams,
   QueryListParams,
 } from './dto/queryListParams.dto';
+import { CommentDto, MainCommentDto } from './dto/createComment.dto';
+import { ResponseCommentDto } from './dto/responseComment.dto';
+import { ResponseMultipleComments } from './dto/responseMultipleComments.dto';
 
 @Controller('articles')
 export class ArticleController {
@@ -144,6 +147,27 @@ export class ArticleController {
     return this.articleService.buildArticleResponse(article);
   }
 
+  @Post(':slug/comments')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiBody({ type: MainCommentDto })
+  @ApiResponse({
+    status: 200,
+    type: ResponseCommentDto,
+  })
+  async addComment(
+    @User('id') currentUserId: string,
+    @Param('slug') slug: string,
+    @Body('comment') commentDto: CommentDto,
+  ): Promise<ResponseCommentDto> {
+    const comment = await this.articleService.addComment(
+      slug,
+      commentDto,
+      currentUserId,
+    );
+    return this.articleService.buildCommentResponse(comment);
+  }
+
   @Delete(':slug/favorite')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -160,5 +184,18 @@ export class ArticleController {
       currentUserId,
     );
     return this.articleService.buildArticleResponse(article);
+  }
+
+  @Get(':slug/comments')
+  @UseGuards(AllowNullUserGuard)
+  @ApiResponse({
+    status: 200,
+    type: ResponseMultipleComments,
+  })
+  async getComments(
+    @User() currentUser: UserEntity | null,
+    @Param('slug') slug: string,
+  ): Promise<ResponseMultipleComments> {
+    return await this.articleService.getComments(slug, currentUser);
   }
 }

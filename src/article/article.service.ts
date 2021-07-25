@@ -13,12 +13,18 @@ import {
   QueryListFeedsParams,
   QueryListParams,
 } from './dto/queryListParams.dto';
+import { CommentEntity } from './comment.entity';
+import { CommentInfoDto, ResponseCommentDto } from './dto/responseComment.dto';
+import { CommentDto } from './dto/createComment.dto';
+import { ResponseMultipleComments } from './dto/responseMultipleComments.dto';
 
 @Injectable()
 export class ArticleService {
   constructor(
     @InjectRepository(ArticleEntity)
     private readonly articleRepository: Repository<ArticleEntity>,
+    @InjectRepository(ArticleEntity)
+    private readonly commentRepository: Repository<CommentEntity>,
   ) {}
 
   async createArticle(
@@ -240,5 +246,34 @@ WHERE users.id=users_favorites_articles."usersId" AND users.username=:favorited
     const articles = listArticles.map((a) => a.article);
     console.log(queryBuilder.getQuery());
     return { articles, articlesCount };
+  }
+
+  buildCommentResponse(comment: CommentInfoDto): ResponseCommentDto {
+    return { comment };
+  }
+
+  async addComment(
+    slug: string,
+    comment: CommentDto,
+    currentUserId: string,
+  ): Promise<CommentInfoDto> {
+    const { body, idParent = null } = comment;
+    const comments = await this.commentRepository.query(
+      'Select add_comment($1, $2, $3, $4) as comments;',
+      [currentUserId, slug, body, idParent],
+    );
+    return comments[0]['comments'] as CommentInfoDto;
+  }
+
+  async getComments(
+    slug: string,
+    user: UserEntity | null,
+  ): Promise<ResponseMultipleComments> {
+    const userId = user && user.id;
+    const newArticles = await this.commentRepository.query(
+      'Select get_comments_json($1, $2) as comments;',
+      [slug, userId],
+    );
+    return newArticles[0]['comments'] as ResponseMultipleComments;
   }
 }
