@@ -76,6 +76,9 @@ $ npm run start:prod
 
 - В [/articles/:slug](https://github.com/gothinkster/realworld/tree/master/api#get-article) а точнее - в [Single Article](https://github.com/gothinkster/realworld/tree/master/api#single-article) добавил количество комментариев к заметке.
 - Добавлен метод `PATCH /user` для **загрузки** аватарки и/или смены пароля.
+- Тип id у комментариев это uuid .
+- Для комментария в БД добавлено поле id_parent. В API выдаётся под названием idParent.
+  Назначение этого поля- родительский комментарий, т.е. тот комментарий, на который был дан ответ.
 
 ## TODO
 
